@@ -1,0 +1,87 @@
+import type { TimelineStore } from '../breadcrumbs/store.js';
+import { FIXI_ROOT_ID } from '../breadcrumbs/click.js';
+import { captureViewport } from '../capture.js';
+import type { WidgetConfig } from '../config.js';
+import { debug } from '../native.js';
+import { h, icon, ICON_ALERT } from './dom.js';
+import { openModal } from './modal.js';
+import { STYLES } from './styles.js';
+
+export interface FixiUI {
+  mount(): void;
+  open(): Promise<void>;
+}
+
+/** Events that must not leak out of the widget to the host app (shortcuts, focus traps...). */
+const ISOLATED_EVENTS = ['keydown', 'keyup', 'keypress', 'focusin'];
+
+export function createUI(getConfig: () => WidgetConfig, store: TimelineStore): FixiUI {
+  let root: ShadowRoot | null = null;
+  let tab: HTMLButtonElement | null = null;
+  let busy = false;
+
+  /** Creates the Shadow DOM host. Everything the widget displays lives inside it. */
+  function mount(): void {
+    if (root || document.getElementById(FIXI_ROOT_ID)) return;
+    const host = h('div', { id: FIXI_ROOT_ID });
+    root = host.attachShadow({ mode: 'open' });
+    root.append(h('style', { textContent: STYLES }));
+
+    tab = h(
+      'button',
+      {
+        class: 'tab',
+        type: 'button',
+        attrs: { 'aria-label': 'Signaler un problème' },
+        on: { click: () => void open() },
+      },
+      icon(ICON_ALERT, 18),
+      h('span', {}, 'Signaler un problème'),
+    );
+    root.append(tab);
+
+    // A host-side focus trap (e.g. a Bootstrap modal) would steal the focus from our textarea.
+    for (const type of ISOLATED_EVENTS) host.addEventListener(type, (e) => e.stopPropagation());
+
+    // On <html>, not <body>: apps that swap the whole body (Turbo, htmx boost) must not remove it.
+    document.documentElement.append(host);
+  }
+
+  async function open(): Promise<void> {
+    mount();
+    if (busy || !root || !tab) return;
+    busy = true;
+    tab.hidden = true;
+
+    // Click 1: the capture is taken BEFORE the modal exists, so the modal can never appear on it.
+    const loading = h(
+      'div',
+      { class: 'loading', attrs: { role: 'status' } },
+      h('span', { class: 'spinner' }),
+      'Préparation du signalement…',
+    );
+    root.append(loading);
+    let capture = null;
+    try {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve())); // let the spinner paint
+      capture = await captureViewport();
+    } catch (err) {
+      debug(err);
+    } finally {
+      loading.remove();
+    }
+
+    openModal({
+      container: root,
+      capture,
+      getConfig,
+      store,
+      onClose: () => {
+        busy = false;
+        if (tab) tab.hidden = false;
+      },
+    });
+  }
+
+  return { mount, open };
+}

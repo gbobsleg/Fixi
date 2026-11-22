@@ -8,11 +8,16 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --import tsx --watch src/server/index.ts",
-    "build": "tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
+    "dev": "node scripts/dev.mjs",
+    "dev:server": "node --env-file-if-exists=.env --import tsx --watch src/server/index.ts",
+    "dev:widget": "node scripts/build-widget.mjs --watch",
+    "build": "tsc -p tsconfig.build.json && node scripts/build-widget.mjs && node scripts/copy-assets.mjs",
+    "build:widget": "node scripts/build-widget.mjs",
     "start": "node --env-file-if-exists=.env dist/server/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "node --import tsx tests/e2e/widget.e2e.ts",
+    "test-host": "node --env-file-if-exists=.env --import tsx test-host/server.ts",
     "seed": "node --env-file-if-exists=.env --import tsx scripts/seed.ts",
     "hash-password": "tsx scripts/hash-password.ts",
     "purge": "node --env-file-if-exists=.env --import tsx scripts/purge.ts"
@@ -36,7 +41,11 @@
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.6.6",
     "@types/nodemailer": "^8.0.2",
+    "bootstrap": "^5.3.9",
     "esbuild": "^0.28.2",
+    "jsdom": "^31.0.1",
+    "modern-screenshot": "^4.7.0",
+    "playwright-core": "^1.65.1",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.1"

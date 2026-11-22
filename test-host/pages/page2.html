@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page 2 (page de test Fixi)</title>
+  <link rel="stylesheet" href="/vendor/bootstrap.min.css">
+</head>
+<body class="p-4">
+  <h1 class="h3">Page 2</h1>
+  <p>La chronologie de Fixi doit survivre à ce changement de page (sessionStorage).</p>
+  <a class="btn btn-primary" id="retour" href="/">Retour à la page 1</a>
+  <button id="btn-fetch500" class="btn btn-danger">fetch POST → 500</button>
+  <button id="btn-open" class="btn btn-outline-primary">window.Fixi.open()</button>
+
+  <script src="/app.js"></script>
+  <script
+    src="__FIXI_URL__/widget.js"
+    data-app="__APP__"
+    data-api-key="__API_KEY__"
+    data-user="j.dupont (superviseur)"
+    data-user-email="j.dupont@domaine.fr"
+    data-version="a3f9c12"
+    defer></script>
+</body>
+</html>

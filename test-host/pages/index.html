@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shifti (page de test Fixi)</title>
+  <link rel="stylesheet" href="/vendor/bootstrap.min.css">
+  <style>
+    #bandeau-fixe { position: fixed; left: 0; bottom: 0; width: 100%; background: #198754; color: #fff; padding: 8px 16px; z-index: 1000; }
+    body { padding-bottom: 60px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container"><span class="navbar-brand">Shifti (appli hôte simulée)</span>
+      <a class="btn btn-outline-light btn-sm" href="/page2.html" id="lien-page2">Aller à la page 2</a></div>
+  </nav>
+
+  <main class="container">
+    <h1 class="h3">Planning de la semaine 47</h1>
+    <p class="text-muted">Cette page simule une application hôte : Bootstrap 5, erreurs HTTP et JS provoquées, page plus haute que l'écran.</p>
+
+    <section class="card card-body mb-4" id="actions">
+      <h2 class="h5">Provoquer des événements</h2>
+      <div class="d-flex flex-wrap gap-2">
+        <button id="btn-ok" class="btn btn-secondary btn-sm">fetch 200</button>
+        <button id="btn-fetch500" class="btn btn-danger btn-sm">fetch POST → 500</button>
+        <button id="btn-xhr422" class="btn btn-warning btn-sm">XHR POST → 422</button>
+        <button id="btn-typeerror" class="btn btn-danger btn-sm">TypeError</button>
+        <button id="btn-rejection" class="btn btn-danger btn-sm">Promesse rejetée</button>
+        <button id="btn-console" class="btn btn-warning btn-sm">console.error</button>
+        <button id="btn-secret" class="btn btn-info btn-sm">POST avec password/token</button>
+        <button id="btn-push" class="btn btn-secondary btn-sm">pushState</button>
+        <button id="btn-open" class="btn btn-outline-primary btn-sm">window.Fixi.open()</button>
+        <button class="btn btn-outline-dark btn-sm" data-bs-toggle="modal" data-bs-target="#modal-bs">Modale Bootstrap</button>
+      </div>
+    </section>
+
+    <section class="card card-body mb-4">
+      <h2 class="h5">Formulaire</h2>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label" for="agent_id">Agent</label>
+          <select class="form-select" id="agent_id" name="agent_id"><option>Agent A</option><option>Agent B</option></select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="mot-de-passe">Mot de passe (ne doit jamais être lu)</label>
+          <input class="form-control" id="mot-de-passe" type="password" name="password" value="hunter2">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Donnée masquée (data-fixi-mask)</label>
+          <div data-fixi-mask id="bloc-masque" class="border rounded p-2 bg-warning-subtle">Salaire : 4 200 € brut</div>
+        </div>
+      </div>
+      <p class="mt-3 mb-1 small text-muted">Conteneur défilant (scrollé à la ligne 11 : la capture doit montrer cette position)</p>
+      <div id="zone-scroll" class="border" style="height:100px;overflow:auto"></div>
+      <button id="btn-save-shift" class="btn btn-primary btn-lg mt-3">Valider le planning</button>
+    </section>
+
+    <section class="card card-body mb-4">
+      <h2 class="h5">Planning (page volontairement haute)</h2>
+      <table class="table table-sm table-striped" id="planning">
+        <thead><tr><th>#</th><th>Agent</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th></tr></thead>
+        <tbody id="planning-body"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <div id="bandeau-fixe">Bandeau fixe (position: fixed), doit rester collé en bas de la capture</div>
+
+  <div class="modal fade" id="modal-bs" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Modale Bootstrap</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">Ouvrez « Signaler un problème » depuis cette modale : le champ de saisie de Fixi doit rester utilisable.</div>
+    </div></div>
+  </div>
+
+  <script src="/vendor/bootstrap.bundle.min.js"></script>
+  <script src="/app.js"></script>
+  <script
+    src="__FIXI_URL__/widget.js"
+    data-app="__APP__"
+    data-api-key="__API_KEY__"
+    data-user="j.dupont (superviseur)"
+    data-user-email="j.dupont@domaine.fr"
+    data-version="a3f9c12"
+    defer></script>
+</body>
+</html>
