@@ -34,7 +34,9 @@ function readHidden(prompt: string): Promise<string> {
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
-  return Buffer.concat(chunks).toString('utf8').replace(/\r?\n$/, '');
+  // Windows PowerShell 5.1 prefixes piped text with a UTF-8 BOM (U+FEFF) and ends it with CRLF:
+  // strip both, otherwise the hash would be that of a different password.
+  return Buffer.concat(chunks).toString('utf8').replace(/^﻿/, '').replace(/\r?\n$/, '');
 }
 
 const password = process.stdin.isTTY ? await readHidden('Mot de passe admin : ') : await readStdin();
