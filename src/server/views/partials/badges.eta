@@ -1,0 +1,8 @@
+<% const r = it.report; %>
+<% if (r.category === 'blocking') { %><span class="badge badge-red">Bloquant</span><% } %>
+<% if (r.category === 'suggestion') { %><span class="badge badge-blue">Suggestion</span><% } %>
+<% if (r.max_http_status !== null && r.max_http_status >= 500) { %><span class="badge badge-orange">HTTP 5xx</span><% } else if (r.has_http_error) { %><span class="badge badge-yellow">HTTP 4xx</span><% } %>
+<% if (r.has_js_error) { %><span class="badge badge-purple">JS Error</span><% } %>
+<% if (r.duplicates_count > 0) { %><span class="badge badge-gray">+<%= r.duplicates_count %> signalement<%= r.duplicates_count > 1 ? 's' : '' %></span><% } %>
+<% if (r.attachment_path) { %><span class="badge badge-gray">PJ</span><% } %>
+<% if (r.issue_url) { %><a class="badge badge-green" href="<%= r.issue_url %>" target="_blank" rel="noopener noreferrer"><%= r.issue_provider === 'github' ? 'GitHub' : (r.issue_provider === 'gitlab' ? 'GitLab' : 'Issue') %><%= r.issue_number ? ' #' + r.issue_number : '' %></a><% } %>

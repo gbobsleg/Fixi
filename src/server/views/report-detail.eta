@@ -1,0 +1,217 @@
+<% const r = it.report; %>
+<% const isChild = r.parent_id !== null; %>
+<% const isParent = it.children.length > 0; %>
+<% const base = Date.parse(r.client_created_at); %>
+<div
+  x-data="reportPage"
+  data-id="<%= r.id %>"
+  data-app-id="<%= r.app_id %>"
+  data-app-slug="<%= it.app.slug %>"
+  data-screenshot="<%= r.screenshot_path ? '/api/admin/files/' + r.screenshot_path : '' %>"
+  data-status="<%= r.status %>"
+  data-notes="<%= r.admin_notes || '' %>"
+  data-issue-url="<%= isChild ? '' : (r.issue_url || '') %>"
+  x-cloak>
+
+  <p><a href="/admin">← Retour à la liste</a></p>
+
+  <header class="detail-head">
+    <h1>Signalement #<%= r.id %> <span class="muted">· <%= it.app.name %></span></h1>
+    <div class="badges">
+      <span class="status status-<%= r.status %>"><%= it.statusLabels[r.status] %></span>
+      <%~ include('./partials/badges', { report: Object.assign({}, r, { duplicates_count: it.children.length, issue_url: it.issue ? it.issue.url : null, issue_provider: it.issue ? it.issue.provider : null, issue_number: it.issue ? it.issue.number : null }) }) %>
+    </div>
+  </header>
+
+  <p class="error" x-show="error" x-text="error"></p>
+  <p class="notice" x-show="notice" x-text="notice"></p>
+
+  <section class="card toolbar">
+    <button type="button" class="btn btn-primary" @click="copyMarkdown()">Copier pour Cursor</button>
+    <% if (r.screenshot_path) { %>
+      <button type="button" class="btn" @click="copyImage()">Copier l'image</button>
+    <% } %>
+    <button type="button" class="btn" @click="downloadMarkdown()">Télécharger .md</button>
+    <% if (r.screenshot_path) { %>
+      <a class="btn" href="/api/admin/files/<%= r.screenshot_path %>?download=1" download>Télécharger la capture</a>
+    <% } %>
+    <% if (r.attachment_path) { %>
+      <a class="btn" href="/api/admin/files/<%= r.attachment_path %>?download=1" download>Pièce jointe : <%= r.attachment_original_name || r.attachment_path %></a>
+    <% } %>
+  </section>
+
+  <div class="columns">
+    <div class="col-main">
+      <section class="card">
+        <h2>Symptôme</h2>
+        <p class="comment"><%= r.comment || '(aucun commentaire, voir la capture)' %></p>
+      </section>
+
+      <section class="card">
+        <h2>Chronologie</h2>
+        <% if (r.timeline.length === 0) { %>
+          <p class="muted">Aucun événement enregistré.</p>
+        <% } else { %>
+        <table class="table timeline">
+          <tbody>
+          <% for (const e of r.timeline) { %>
+            <tr>
+              <td class="nowrap muted"><%= ((e.t - base) / 1000).toFixed(1) %>s</td>
+              <% if (e.type === 'nav') { %>
+                <td><span class="badge badge-gray">NAV</span></td>
+                <td><code><%= e.url %></code> <span class="muted">(<%= e.kind %>)</span></td>
+              <% } else if (e.type === 'click') { %>
+                <td><span class="badge badge-gray">CLICK</span></td>
+                <td><code><%= e.selector %></code> <%= e.text ? '(' + e.text + ')' : '' %></td>
+              <% } else if (e.type === 'net') { %>
+                <td><span class="badge <%= e.status === 0 || e.status >= 500 ? 'badge-orange' : (e.status >= 400 ? 'badge-yellow' : 'badge-gray') %>">NET</span></td>
+                <td>
+                  <code><%= e.method %> <%= e.url %></code> → <strong><%= e.status === 0 ? 'erreur réseau' : e.status %></strong>
+                  <span class="muted">(<%= Math.round(e.durationMs) %> ms<%= e.requestId ? ', ' + e.requestId : '' %>)</span>
+                  <% if (e.requestBody) { %><pre class="code"><strong>Payload</strong>
+<%= e.requestBody %></pre><% } %>
+                  <% if (e.responseBody) { %><pre class="code"><strong>Réponse</strong>
+<%= e.responseBody %></pre><% } %>
+                </td>
+              <% } else { %>
+                <td><span class="badge badge-purple">JS_ERROR</span></td>
+                <td>
+                  <code><%= e.message %></code>
+                  <% if (e.file) { %><span class="muted">à <%= e.file %><%= e.line !== undefined ? ':' + e.line : '' %><%= e.col !== undefined ? ':' + e.col : '' %></span><% } %>
+                </td>
+              <% } %>
+            </tr>
+          <% } %>
+          </tbody>
+        </table>
+        <% } %>
+      </section>
+
+      <section class="card">
+        <h2>Doublons</h2>
+        <% if (isChild) { %>
+          <p>Doublon du signalement
+            <a href="/admin/reports/<%= it.parent.id %>">#<%= it.parent.id %></a>
+            — <%= it.excerpt(it.parent.comment, 80) %>
+          </p>
+          <% if (it.issue) { %>
+            <p>Issue du parent : <a href="<%= it.issue.url %>" target="_blank" rel="noopener noreferrer"><%= it.issue.url %></a></p>
+          <% } %>
+          <button type="button" class="btn" @click="patch({ parent_id: null })">Détacher</button>
+        <% } else if (isParent) { %>
+          <h3>Signalements rattachés (<%= it.children.length %>)</h3>
+          <table class="table">
+            <thead><tr><th>N°</th><th>Auteur</th><th>Date</th><th>Extrait</th></tr></thead>
+            <tbody>
+            <% for (const c of it.children) { %>
+              <tr>
+                <td><a href="/admin/reports/<%= c.id %>">#<%= c.id %></a></td>
+                <td><%= c.user_info %></td>
+                <td class="nowrap"><%= it.fmt(c.created_at) %></td>
+                <td><%= it.excerpt(c.comment, 100) %></td>
+              </tr>
+            <% } %>
+            </tbody>
+          </table>
+        <% } else { %>
+          <button type="button" class="btn" @click="toggleAttach()">Rattacher comme doublon de…</button>
+          <div x-show="attachOpen" x-cloak class="attach">
+            <input type="search" x-model="attachQuery" @input.debounce.300ms="searchParents()" placeholder="Rechercher par n° ou commentaire">
+            <ul class="results">
+              <template x-for="p in parents" :key="p.id">
+                <li>
+                  <button type="button" class="link" @click="attach(p.id)">
+                    <span x-text="'#' + p.id"></span> —
+                    <span x-text="p.comment.slice(0, 100) || '(capture seule)'"></span>
+                  </button>
+                </li>
+              </template>
+            </ul>
+            <p class="muted" x-show="attachSearched &amp;&amp; parents.length === 0">Aucun signalement trouvé.</p>
+          </div>
+        <% } %>
+      </section>
+    </div>
+
+    <aside class="col-side">
+      <% if (r.screenshot_path) { %>
+      <section class="card">
+        <h2>Capture</h2>
+        <button type="button" class="thumb" @click="openLightbox()" aria-label="Agrandir la capture">
+          <img src="/api/admin/files/<%= r.screenshot_path %>" alt="Capture d'écran du signalement">
+        </button>
+      </section>
+      <% } %>
+
+      <section class="card">
+        <h2>Contexte</h2>
+        <dl class="meta">
+          <dt>Utilisateur</dt><dd><%= r.user_info || '—' %><%= r.user_email ? ' — ' + r.user_email : '' %></dd>
+          <dt>Catégorie</dt><dd><%= it.categoryLabels[r.category] %></dd>
+          <dt>URL</dt><dd class="break"><%= r.url %></dd>
+          <dt>Version</dt><dd><%= r.app_version || '—' %></dd>
+          <dt>Viewport</dt><dd><%= r.viewport || '—' %></dd>
+          <dt>Navigateur</dt><dd><%= it.describeUserAgent(r.user_agent) %></dd>
+          <dt>Date</dt><dd><%= it.fmt(r.client_created_at) %></dd>
+          <dt>Notifié le</dt><dd><%= r.last_notified_at ? it.fmt(r.last_notified_at) : '—' %></dd>
+        </dl>
+      </section>
+
+      <section class="card">
+        <h2>Statut</h2>
+        <% if (isChild) { %>
+          <p class="muted">Doublon : le statut est géré depuis le signalement parent. Détachez-le pour le modifier.</p>
+        <% } else { %>
+          <select x-model="status">
+            <% for (const s of it.statuses) { %>
+              <% if (s !== 'duplicate') { %><option value="<%= s %>"><%= it.statusLabels[s] %></option><% } %>
+            <% } %>
+          </select>
+          <button type="button" class="btn btn-small" @click="patch({ status: status })">Enregistrer</button>
+        <% } %>
+      </section>
+
+      <section class="card">
+        <h2>Notes internes</h2>
+        <p class="muted">Privé : jamais partagé (ni Markdown, ni issue, ni e-mail).</p>
+        <textarea x-model="notes" rows="5"></textarea>
+        <button type="button" class="btn btn-small" @click="patch({ admin_notes: notes })">Enregistrer les notes</button>
+      </section>
+
+      <section class="card">
+        <h2>Issue</h2>
+        <% if (isChild) { %>
+          <p class="muted">Un doublon affiche l'issue de son parent.</p>
+        <% } else { %>
+          <% if (it.issue) { %>
+            <p><a href="<%= it.issue.url %>" target="_blank" rel="noopener noreferrer"><%= it.issue.url %></a></p>
+          <% } %>
+          <label>Lier une issue existante (URL https)
+            <input type="url" x-model="issueUrl" placeholder="https://gitlab.interne/groupe/projet/-/issues/12">
+          </label>
+          <button type="button" class="btn btn-small" @click="patch({ issue_url: issueUrl.trim() || null })">Enregistrer le lien</button>
+          <p>
+            <button type="button" class="btn" disabled>Créer l'issue <span class="badge badge-gray">bientôt</span></button>
+          </p>
+        <% } %>
+      </section>
+
+      <section class="card">
+        <h2>Notifier les utilisateurs</h2>
+        <button type="button" class="btn" disabled>Notifier <span class="badge badge-gray">bientôt</span></button>
+      </section>
+    </aside>
+  </div>
+
+  <% if (r.screenshot_path) { %>
+  <div class="lightbox" x-show="lightbox" x-cloak @keydown.escape.window="lightbox = false">
+    <div class="lightbox-bar">
+      <span class="muted" x-text="zoom ? 'Taille réelle (clic pour ajuster)' : 'Ajusté (clic pour la taille réelle)'"></span>
+      <button type="button" class="btn btn-small" @click="lightbox = false">Fermer (Échap)</button>
+    </div>
+    <div class="lightbox-scroll">
+      <img :src="lightboxSrc" :class="zoom ? 'actual' : 'fit'" @click="zoom = !zoom" alt="Capture d'écran en grand">
+    </div>
+  </div>
+  <% } %>
+</div>

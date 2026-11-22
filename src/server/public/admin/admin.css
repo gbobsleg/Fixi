@@ -1,0 +1,117 @@
+/* Fixi admin. No inline styles anywhere (CSP: style-src 'self'). */
+
+/* Hides Alpine-controlled blocks (modals, lightbox, hidden panels) until Alpine has initialised. */
+[x-cloak] { display: none !important; }
+
+:root {
+  --bg: #f5f6f8;
+  --card: #fff;
+  --text: #1c2430;
+  --muted: #6b7686;
+  --border: #dde1e7;
+  --primary: #2457d6;
+  --danger: #c62828;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+a { color: var(--primary); }
+h1 { font-size: 22px; margin: 0 0 12px; }
+h2 { font-size: 15px; margin: 0 0 10px; }
+h3 { font-size: 14px; margin: 0 0 8px; }
+code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+code { background: #eef0f4; padding: 1px 4px; border-radius: 4px; word-break: break-all; }
+.muted { color: var(--muted); }
+.nowrap { white-space: nowrap; }
+.break { word-break: break-all; }
+.error { color: var(--danger); margin: 8px 0; }
+.notice { color: #1b6e3a; margin: 8px 0; }
+
+/* Layout */
+.topbar { display: flex; align-items: center; gap: 16px; padding: 10px 24px; background: #fff; border-bottom: 1px solid var(--border); }
+.topbar .brand { font-weight: 700; font-size: 18px; text-decoration: none; color: var(--text); }
+.topbar nav { display: flex; gap: 14px; }
+.spacer { flex: 1; }
+.page { max-width: 1280px; margin: 0 auto; padding: 24px; }
+.page-narrow { max-width: 420px; padding-top: 80px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+.columns { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 16px; align-items: start; }
+.detail-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* Forms */
+label { display: block; font-weight: 600; font-size: 12.5px; }
+label.check { display: flex; align-items: center; gap: 6px; font-weight: 400; }
+input[type=text], input[type=search], input[type=password], input[type=url], select, textarea {
+  display: block; width: 100%; margin-top: 4px; padding: 7px 9px; font: inherit;
+  border: 1px solid var(--border); border-radius: 6px; background: #fff; color: inherit;
+}
+textarea { resize: vertical; }
+.filters { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.filters .grow { flex: 1; min-width: 220px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.grid .span { grid-column: 1 / -1; }
+.actions { display: flex; gap: 8px; }
+.login h1 { margin-bottom: 4px; }
+.login form { display: grid; gap: 12px; margin-top: 12px; }
+
+/* Buttons */
+.btn { display: inline-block; padding: 7px 12px; font: inherit; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); text-decoration: none; cursor: pointer; }
+.btn:hover:not(:disabled) { background: #f0f2f6; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #1c46b0; }
+.btn-danger { color: var(--danger); }
+.btn-small { padding: 4px 9px; font-size: 12.5px; }
+button.link { background: none; border: 0; padding: 4px 0; color: var(--primary); cursor: pointer; font: inherit; text-align: left; }
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Table */
+.table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; }
+.table th, .table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.table th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.table tr:last-child td { border-bottom: 0; }
+.excerpt { color: var(--text); text-decoration: none; font-weight: 500; }
+.excerpt:hover { text-decoration: underline; }
+.timeline td { font-size: 13px; }
+.pagination { display: flex; align-items: center; gap: 12px; justify-content: center; }
+
+/* Badges and statuses */
+.badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; text-decoration: none; background: #e8ebf0; color: #3b4656; }
+.badge-red { background: #fde2e1; color: #a61b1b; }
+.badge-orange { background: #ffe8cc; color: #a34b00; }
+.badge-yellow { background: #fff3bf; color: #7a5b00; }
+.badge-purple { background: #ece3fb; color: #5a2ea6; }
+.badge-blue { background: #dde8ff; color: #1c46b0; }
+.badge-green { background: #d9f2e1; color: #1b6e3a; }
+.badge-gray { background: #e8ebf0; color: #3b4656; }
+.status { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; background: #e8ebf0; }
+.status-new { background: #dde8ff; color: #1c46b0; }
+.status-in_progress { background: #fff3bf; color: #7a5b00; }
+.status-sent { background: #ece3fb; color: #5a2ea6; }
+.status-resolved { background: #d9f2e1; color: #1b6e3a; }
+.status-rejected, .status-duplicate { background: #e8ebf0; color: #3b4656; }
+
+/* Detail */
+.comment { white-space: pre-wrap; margin: 0; }
+.meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.meta dt { color: var(--muted); }
+.meta dd { margin: 0; }
+pre.code { background: #f3f4f7; border-radius: 6px; padding: 8px; margin: 6px 0 0; white-space: pre-wrap; word-break: break-all; }
+.thumb { display: block; width: 100%; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: zoom-in; overflow: hidden; }
+.thumb img { display: block; width: 100%; height: auto; }
+.attach { margin-top: 10px; }
+.results { list-style: none; margin: 8px 0 0; padding: 0; }
+.snippet { background: #1c2430; color: #e8ecf3; padding: 12px; border-radius: 6px; overflow-x: auto; white-space: pre; }
+
+/* Lightbox */
+.lightbox { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; background: rgba(10, 14, 20, .92); }
+.lightbox-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; color: #cfd6e2; }
+.lightbox-scroll { flex: 1; overflow: auto; text-align: center; }
+.lightbox-scroll img.fit { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; }
+.lightbox-scroll img.actual { max-width: none; cursor: zoom-out; }
+
+@media (max-width: 900px) {
+  .columns { grid-template-columns: 1fr; }
+}

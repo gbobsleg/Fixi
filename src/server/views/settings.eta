@@ -1,0 +1,71 @@
+<div x-data="settingsPage" data-base-url="<%= it.appBaseUrl %>" x-cloak>
+  <h1>Paramètres</h1>
+  <p class="muted">Applications autorisées à envoyer des signalements.</p>
+
+  <p class="error" x-show="error" x-text="error"></p>
+  <p class="notice" x-show="notice" x-text="notice"></p>
+
+  <table class="table">
+    <thead><tr><th>Application</th><th>Slug</th><th>Tracker</th><th>Origines</th><th></th></tr></thead>
+    <tbody>
+      <template x-for="a in apps" :key="a.id">
+        <tr>
+          <td x-text="a.name"></td>
+          <td><code x-text="a.slug"></code></td>
+          <td x-text="providerLabel(a)"></td>
+          <td x-text="a.allowed_origins.join(', ') || '—'"></td>
+          <td class="nowrap">
+            <button type="button" class="btn btn-small" @click="edit(a)">Modifier</button>
+            <button type="button" class="btn btn-small" @click="regenerate(a)">Régénérer la clé</button>
+            <button type="button" class="btn btn-small btn-danger" @click="remove(a)">Supprimer</button>
+          </td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+  <p class="muted" x-show="apps.length === 0">Aucune application pour le moment.</p>
+
+  <section class="card">
+    <h2 x-text="form.id ? 'Modifier ' + form.name : 'Nouvelle application'"></h2>
+    <form class="grid" @submit.prevent="save()">
+      <label>Slug
+        <input type="text" x-model="form.slug" pattern="[a-z0-9\-]+" required placeholder="shifti">
+      </label>
+      <label>Nom
+        <input type="text" x-model="form.name" required placeholder="Shifti">
+      </label>
+      <label class="span">Origines autorisées (une par ligne)
+        <textarea x-model="form.origins" rows="3" placeholder="https://shifti.interne"></textarea>
+      </label>
+      <label>Tracker d'issues
+        <select x-model="form.issue_provider">
+          <option value="">Aucun</option>
+          <option value="gitlab">GitLab</option>
+          <option value="github">GitHub</option>
+        </select>
+      </label>
+      <label>Projet
+        <input type="text" x-model="form.issue_project" placeholder="42 (GitLab) ou owner/repo (GitHub)">
+      </label>
+      <label>Labels par défaut
+        <input type="text" x-model="form.issue_default_labels" placeholder="bug,fixi">
+      </label>
+      <label class="check">
+        <input type="checkbox" x-model="form.issue_anonymize">
+        Anonymiser les issues (sans utilisateur, e-mail, payloads ni capture)
+      </label>
+      <div class="span actions">
+        <button type="submit" class="btn btn-primary" x-text="form.id ? 'Enregistrer' : 'Créer'"></button>
+        <button type="button" class="btn" x-show="form.id" @click="reset()">Annuler</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" x-show="selected">
+    <h2>Snippet à intégrer dans le layout de <span x-text="selected && selected.name"></span></h2>
+    <p class="muted">Adapter les valeurs <code>data-user</code>, <code>data-user-email</code> et <code>data-version</code> à l'application hôte.</p>
+    <pre class="snippet" x-text="snippet()"></pre>
+    <button type="button" class="btn" @click="copySnippet()">Copier le snippet</button>
+    <span class="muted" x-show="copied">Copié.</span>
+  </section>
+</div>

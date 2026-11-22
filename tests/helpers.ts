@@ -7,6 +7,7 @@ import { buildApp } from '../src/server/app.js';
 import type { Config } from '../src/server/config.js';
 import { openDatabase, type DB } from '../src/server/db/index.js';
 import { createApp, type App } from '../src/server/repositories/apps.js';
+import { insertReport } from '../src/server/repositories/reports.js';
 
 export const ADMIN_PASSWORD = 'correct-horse-battery';
 export const TEST_ORIGIN = 'http://localhost:5173';
@@ -128,4 +129,33 @@ export function reportPayload(app: App, extra: Record<string, unknown> = {}) {
     timeline: [],
     ...extra,
   };
+}
+
+/** Inserts a report directly in the database (bypasses the public API). Returns its id. */
+export function addReport(
+  db: DB,
+  app: App,
+  overrides: Partial<Parameters<typeof insertReport>[1]> = {},
+): number {
+  return insertReport(db, {
+    app_id: app.id,
+    category: 'bug',
+    comment: 'La roue tourne.',
+    user_info: 'j.dupont',
+    user_email: null,
+    app_version: null,
+    url: 'https://shifti.interne/plannings/edit/42',
+    user_agent: 'Mozilla/5.0',
+    viewport: '1920x1080',
+    client_created_at: new Date().toISOString(),
+    screenshot_path: null,
+    attachment_path: null,
+    attachment_original_name: null,
+    attachment_mime: null,
+    timeline: [],
+    has_http_error: false,
+    max_http_status: null,
+    has_js_error: false,
+    ...overrides,
+  });
 }

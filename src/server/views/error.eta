@@ -1,0 +1,5 @@
+<section class="card">
+  <h1><%= it.title %></h1>
+  <p><%= it.message %></p>
+  <p><a href="/admin">Retour à la liste</a></p>
+</section>

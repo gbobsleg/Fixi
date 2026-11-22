@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= it.title %> · Fixi</title>
+  <link rel="stylesheet" href="/public/admin/admin.css">
+  <script src="/public/admin/admin.js"></script>
+  <script defer src="/public/vendor/alpine.min.js"></script>
+</head>
+<body>
+<% if (it.nav) { %>
+  <header class="topbar" x-data="logoutButton">
+    <a class="brand" href="/admin">Fixi</a>
+    <nav>
+      <a href="/admin">Signalements</a>
+      <a href="/admin/settings">Paramètres</a>
+    </nav>
+    <span class="spacer"></span>
+    <span class="muted"><%= it.adminUser %></span>
+    <button type="button" class="btn btn-small" @click="logout()">Déconnexion</button>
+  </header>
+<% } %>
+  <main class="<%= it.nav ? 'page' : 'page page-narrow' %>">
+    <%~ it.body %>
+  </main>
+</body>
+</html>

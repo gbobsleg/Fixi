@@ -1,0 +1,63 @@
+<h1>Signalements <span class="muted">(<%= it.result.total %>)</span></h1>
+
+<form class="filters card" method="get" action="/admin">
+  <label>Application
+    <select name="app_id">
+      <option value="">Toutes</option>
+      <% for (const a of it.apps) { %>
+        <option value="<%= a.id %>" <%= it.filters.app_id === a.id ? 'selected' : '' %>><%= a.name %></option>
+      <% } %>
+    </select>
+  </label>
+  <label>Statut
+    <select name="status">
+      <option value="">Tous</option>
+      <% for (const s of it.statuses) { %>
+        <option value="<%= s %>" <%= it.filters.status === s ? 'selected' : '' %>><%= it.statusLabels[s] %></option>
+      <% } %>
+    </select>
+  </label>
+  <label>Catégorie
+    <select name="category">
+      <option value="">Toutes</option>
+      <% for (const c of it.categories) { %>
+        <option value="<%= c %>" <%= it.filters.category === c ? 'selected' : '' %>><%= it.categoryLabels[c] %></option>
+      <% } %>
+    </select>
+  </label>
+  <label class="grow">Recherche
+    <input type="search" name="q" value="<%= it.filters.q || '' %>" placeholder="Commentaire, utilisateur, URL ou n°">
+  </label>
+  <label class="check">
+    <input type="checkbox" name="include_duplicates" value="1" <%= it.filters.include_duplicates ? 'checked' : '' %>>
+    Afficher les doublons
+  </label>
+  <button type="submit" class="btn btn-primary">Filtrer</button>
+  <a class="btn" href="/admin">Réinitialiser</a>
+</form>
+
+<% if (it.result.reports.length === 0) { %>
+  <p class="card muted">Aucun signalement ne correspond à ces filtres.</p>
+<% } else { %>
+<table class="table">
+  <thead>
+    <tr><th>N°</th><th>Signalement</th><th>Application</th><th>Utilisateur</th><th>Date</th><th>Statut</th></tr>
+  </thead>
+  <tbody>
+  <% for (const r of it.result.reports) { %>
+    <tr>
+      <td><a href="/admin/reports/<%= r.id %>">#<%= r.id %></a></td>
+      <td>
+        <a class="excerpt" href="/admin/reports/<%= r.id %>"><%= it.excerpt(r.comment, 120) || '(capture seule)' %></a>
+        <div class="badges"><%~ include('./partials/badges', { report: r }) %></div>
+      </td>
+      <td><%= r.app_name %></td>
+      <td><%= r.user_info %></td>
+      <td class="nowrap"><%= it.fmt(r.created_at) %></td>
+      <td><span class="status status-<%= r.status %>"><%= it.statusLabels[r.status] %></span></td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+<%~ include('./partials/pagination', { result: it.result, pageUrl: it.pageUrl }) %>
+<% } %>

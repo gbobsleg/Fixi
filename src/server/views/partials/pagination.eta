@@ -1,0 +1,8 @@
+<% const res = it.result; %>
+<% if (res.total_pages > 1) { %>
+<nav class="pagination">
+  <% if (res.page > 1) { %><a class="btn btn-small" href="<%= it.pageUrl(res.page - 1) %>">← Précédent</a><% } %>
+  <span class="muted">Page <%= res.page %> / <%= res.total_pages %></span>
+  <% if (res.page < res.total_pages) { %><a class="btn btn-small" href="<%= it.pageUrl(res.page + 1) %>">Suivant →</a><% } %>
+</nav>
+<% } %>

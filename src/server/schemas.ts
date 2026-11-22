@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CATEGORIES, JS_ERROR_SOURCES, LIMITS, NAV_KINDS } from '../shared/types.js';
+import { CATEGORIES, JS_ERROR_SOURCES, LIMITS, NAV_KINDS, STATUSES } from '../shared/types.js';
 
 /** String that is silently truncated (never rejected) when too long. */
 const clip = (max: number) => z.string().transform((v) => v.slice(0, max));
@@ -112,3 +112,54 @@ export const loginSchema = z.object({
   username: z.string().min(1).max(200),
   password: z.string().min(1).max(500),
 });
+
+// ---------------------------------------------------------------------------
+// Admin: report list and update (lot 3)
+// ---------------------------------------------------------------------------
+
+/** Query-string value: empty string means "not provided". */
+const optional = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((v) => (v === '' || v === null ? undefined : v), schema.optional());
+
+/** Query-string boolean: "1" / "true" / "on" (checkbox) mean true. */
+const queryBool = z.preprocess(
+  (v) => (typeof v === 'string' ? ['1', 'true', 'on'].includes(v) : v),
+  z.boolean().default(false),
+);
+
+export const reportListQuerySchema = z.object({
+  app_id: optional(z.coerce.number().int().positive()),
+  status: optional(z.enum(STATUSES)),
+  category: optional(z.enum(CATEGORIES)),
+  q: optional(z.string().trim().max(200)),
+  include_duplicates: queryBool,
+  parents_only: queryBool,
+  page: optional(z.coerce.number().int().min(1).max(100000)),
+});
+
+export const reportPatchSchema = z
+  .object({
+    status: z.enum(STATUSES),
+    admin_notes: z
+      .string()
+      .max(10000)
+      .nullable()
+      .transform((v) => (v && v.trim() !== '' ? v : null)),
+    issue_url: z
+      .string()
+      .trim()
+      .max(2000)
+      .nullable()
+      .transform((v) => (v ? v : null))
+      .refine((v) => {
+        if (v === null) return true;
+        try {
+          return new URL(v).protocol === 'https:';
+        } catch {
+          return false;
+        }
+      }, 'must be an https:// URL'),
+    parent_id: z.number().int().positive().nullable(),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, 'at least one field is required');

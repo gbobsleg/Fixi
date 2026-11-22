@@ -1,6 +1,10 @@
 import cookie from '@fastify/cookie';
 import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
+import fastifyStatic from '@fastify/static';
+import fastifyView from '@fastify/view';
+import { Eta } from 'eta';
+import { fileURLToPath } from 'node:url';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import type { Config } from './config.js';
@@ -9,9 +13,12 @@ import { openDatabase, type DB } from './db/index.js';
 import { registerAdminOriginCheck } from './plugins/admin-origin-check.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerPublicCors } from './plugins/public-cors.js';
+import { registerSecurityHeaders } from './plugins/security-headers.js';
 import { registerAdminAppRoutes } from './routes/admin/apps.js';
 import { registerAdminAuthRoutes } from './routes/admin/auth.js';
 import { registerAdminFileRoutes } from './routes/admin/files.js';
+import { registerAdminPages } from './routes/admin/pages.js';
+import { registerAdminReportRoutes } from './routes/admin/reports.js';
 import { registerReportRoutes } from './routes/public/reports.js';
 import { registerWidgetRoute } from './routes/public/widget.js';
 import { LIMITS } from '../shared/types.js';
@@ -54,10 +61,25 @@ export async function buildApp({ config, db }: BuildAppOptions): Promise<Fastify
     limits: { fileSize: LIMITS.maxFileBytes, files: 3, fields: 5, fieldSize: 512 * 1024 },
   });
 
+  // Admin pages: Eta templates (auto-escaped with <%= %>) and static assets, both next to this file
+  // so the same relative URLs work from src/ (dev) and dist/ (build copies them, see scripts/copy-assets.mjs).
+  const viewsDir = fileURLToPath(new URL('./views', import.meta.url));
+  await app.register(fastifyView, {
+    engine: { eta: new Eta({ views: viewsDir, cache: config.nodeEnv === 'production' }) },
+    templates: viewsDir,
+    layout: 'layout.eta',
+  });
+  await app.register(fastifyStatic, {
+    root: fileURLToPath(new URL('./public', import.meta.url)),
+    prefix: '/public/',
+    maxAge: config.nodeEnv === 'production' ? '1h' : 0,
+  });
+
   // Hooks run in registration order: CSRF check, public CORS, then authentication.
   registerAdminOriginCheck(app, ctx);
   registerPublicCors(app, ctx);
   registerAuth(app, ctx);
+  registerSecurityHeaders(app);
 
   app.get('/healthz', async (_req, reply) => {
     try {
@@ -73,6 +95,8 @@ export async function buildApp({ config, db }: BuildAppOptions): Promise<Fastify
   registerAdminAuthRoutes(app, ctx);
   registerAdminAppRoutes(app, ctx);
   registerAdminFileRoutes(app, ctx);
+  registerAdminReportRoutes(app, ctx);
+  registerAdminPages(app, ctx);
 
   return app;
 }
