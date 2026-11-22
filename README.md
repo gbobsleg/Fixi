@@ -4,7 +4,7 @@ Service interne de signalement de bugs : un widget JS mutualisé, un backend Nod
 
 Spécification : [Cahier des Charges - Fixi.md](Cahier%20des%20Charges%20-%20Fixi.md). Plan d'implémentation : [PLAN.md](PLAN.md).
 
-> État : **Lots 1 et 2** (backend, réception des signalements, widget). L'admin et les intégrations GitLab/GitHub/SMTP arrivent dans les lots 3 et 4.
+> État : **Lots 1 à 4** (backend, widget, admin de triage, intégrations GitLab/GitHub et SMTP).
 
 ## Intégrer le widget dans une application
 
@@ -68,4 +68,53 @@ Dans un `docker-compose.yml`, chaque `$` d'un hash écrit en ligne doit être do
 
 ## Variables d'environnement
 
-Voir [.env.example](.env.example). Fixi refuse de démarrer, avec un message clair, s'il manque `APP_BASE_URL`, `ADMIN_USER`, `ADMIN_PASSWORD_HASH` ou `SESSION_SECRET`. Le SMTP est optionnel.
+Voir [.env.example](.env.example). Fixi refuse de démarrer, avec un message clair, s'il manque `APP_BASE_URL`, `ADMIN_USER`, `ADMIN_PASSWORD_HASH` ou `SESSION_SECRET`. Le SMTP et les trackers sont optionnels.
+
+## Intégrer le widget dans Shifti (WAMP) et Flowi (Docker)
+
+1. Page **Paramètres** de l'admin : créer l'application, renseigner ses origines autorisées, copier le snippet.
+2. Coller le snippet dans le layout global (une seule fois). Les valeurs `data-user`, `data-user-email` et `data-version` viennent de l'application hôte (ex. CakePHP : `<?= h($user) ?>`).
+3. **Shifti en local sous WAMP** : ajouter `http://localhost` aux origines autorisées. **Flowi sous Docker** : ajouter l'origine telle que le navigateur la voit (ex. `http://localhost:8080`). Sans cela, l'envoi est refusé (403).
+
+## Trackers d'issues (GitLab et GitHub)
+
+Chaque application choisit son tracker dans **Paramètres** (GitLab, GitHub ou aucun), avec son projet et ses labels par défaut. Les tokens sont globaux, en variables d'environnement.
+
+| Tracker | Variables | Projet | Token à créer |
+|---|---|---|---|
+| GitLab | `GITLAB_URL`, `GITLAB_TOKEN` | id numérique (`42`) ou chemin (`groupe/projet`) | Personal ou Project access token, portée **`api`** |
+| GitHub | `GITHUB_TOKEN` (`GITHUB_API_URL` pour GitHub Enterprise) | `owner/repo` | Fine-grained token, permission **Issues : lecture et écriture** sur le dépôt |
+
+- GitLab : la capture et la pièce jointe sont envoyées avec l'issue. GitHub ne sait pas héberger de fichiers : l'issue contient un lien vers la fiche Fixi.
+- Option **Anonymiser** par application : l'issue ne contient alors ni utilisateur, ni e-mail, ni payload, ni réponse serveur, ni capture.
+- Les `@mentions` du commentaire sont neutralisées (un `@all` ne notifie personne).
+- Une issue est créée une seule fois par signalement (le bouton disparaît ensuite). Si le tracker échoue, rien n'est modifié dans Fixi et le message d'erreur est affiché.
+
+## E-mails (SMTP)
+
+Sans `SMTP_HOST`, Fixi démarre quand même : les e-mails sont écrits dans les logs au lieu d'être envoyés.
+
+- **Alerte admin** : à chaque nouveau signalement, si `ADMIN_ALERT_EMAIL` est défini.
+- **Notification des utilisateurs** : depuis la fiche d'un signalement « Résolu » ou « Non retenu ». Un e-mail individuel par destinataire (adresses dédoublonnées, parent et doublons). `{{date}}` dans le message est remplacé par la date du signalement de chaque destinataire. En cas d'échec partiel, les adresses concernées sont affichées ; la date de dernière notification n'est mise à jour que si au moins un e-mail est parti.
+
+Test local avec [Mailpit](https://mailpit.axllent.org/) :
+
+```bash
+docker run -p 8025:8025 -p 1025:1025 axllent/mailpit
+# .env : SMTP_HOST=localhost, SMTP_PORT=1025, ADMIN_ALERT_EMAIL=admin@exemple.fr
+# les e-mails apparaissent sur http://localhost:8025
+```
+
+## Déploiement derrière un reverse proxy
+
+Fixi écoute en HTTP sur le port 3000 : placer un proxy HTTPS devant (nginx, Traefik, Caddy). `APP_BASE_URL` doit être l'URL publique (liens des e-mails, contrôle d'origine de l'admin). `TRUST_PROXY=true` (déjà activé dans l'image) est nécessaire pour que la limitation de débit voie la vraie IP des clients. Exemple nginx :
+
+```nginx
+location / {
+  proxy_pass http://127.0.0.1:3000;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  client_max_body_size 12m;   # capture + pièce jointe de 5 Mo chacune
+}
+```

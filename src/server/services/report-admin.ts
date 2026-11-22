@@ -12,7 +12,9 @@ import {
 } from '../repositories/reports.js';
 import type { z } from 'zod';
 import type { reportPatchSchema } from '../schemas.js';
+import { buildIssueForm } from './issue-actions.js';
 import { buildReportMarkdown } from './markdown.js';
+import { buildNotifyForm } from './notify-actions.js';
 
 export type ReportPatch = z.infer<typeof reportPatchSchema>;
 
@@ -79,6 +81,8 @@ export function buildReportDetail(ctx: AppContext, id: number) {
       : null,
     children,
     issue: issueOf(row, false) ?? (parent ? issueOf(parent, true) : null),
+    issue_form: buildIssueForm(ctx, row, app),
+    notify_form: buildNotifyForm(ctx, row, children, app),
     markdown,
   };
 }

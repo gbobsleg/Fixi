@@ -163,3 +163,26 @@ export const reportPatchSchema = z
   })
   .partial()
   .refine((v) => Object.keys(v).length > 0, 'at least one field is required');
+
+// ---------------------------------------------------------------------------
+// Admin: issue creation and user notification (lot 4)
+// ---------------------------------------------------------------------------
+
+export const createIssueSchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  labels: z
+    .array(z.string().trim().min(1).max(100))
+    .max(20)
+    .default([]),
+});
+
+export const notifySchema = z.object({
+  // A subject is a mail header: line breaks are flattened to prevent header injection.
+  subject: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
+    .transform((v) => v.replace(/[\r\n]+/g, ' ')),
+  message: z.string().trim().min(1).max(5000),
+});

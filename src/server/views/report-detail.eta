@@ -11,6 +11,11 @@
   data-status="<%= r.status %>"
   data-notes="<%= r.admin_notes || '' %>"
   data-issue-url="<%= isChild ? '' : (r.issue_url || '') %>"
+  data-issue-title="<%= it.issue_form.title %>"
+  data-issue-labels="<%= it.issue_form.labels.join(', ') %>"
+  data-notify-subject="<%= it.notify_form.subject %>"
+  data-notify-message="<%= it.notify_form.message %>"
+  data-last-notified="<%= it.notify_form.last_notified_label || '' %>"
   x-cloak>
 
   <p><a href="/admin">← Retour à la liste</a></p>
@@ -190,15 +195,45 @@
             <input type="url" x-model="issueUrl" placeholder="https://gitlab.interne/groupe/projet/-/issues/12">
           </label>
           <button type="button" class="btn btn-small" @click="patch({ issue_url: issueUrl.trim() || null })">Enregistrer le lien</button>
-          <p>
-            <button type="button" class="btn" disabled>Créer l'issue <span class="badge badge-gray">bientôt</span></button>
-          </p>
+          <% if (!r.issue_url) { %>
+            <% if (it.issue_form.can_create) { %>
+              <p><button type="button" class="btn btn-primary" @click="openIssue()">Créer l'issue <%= it.issue_form.provider === 'github' ? 'GitHub' : 'GitLab' %></button></p>
+            <% } else { %>
+              <p class="muted"><%= it.issue_form.reason %></p>
+            <% } %>
+          <% } %>
         <% } %>
       </section>
 
       <section class="card">
         <h2>Notifier les utilisateurs</h2>
-        <button type="button" class="btn" disabled>Notifier <span class="badge badge-gray">bientôt</span></button>
+        <% if (!it.notify_form.can_notify) { %>
+          <p class="muted"><%= it.notify_form.reason %></p>
+          <% if (isChild) { %><p><a href="/admin/reports/<%= it.parent.id %>">Aller au signalement parent #<%= it.parent.id %></a></p><% } %>
+        <% } else { %>
+          <p class="muted">Un e-mail individuel sera envoyé à :</p>
+          <ul class="recipients">
+            <% for (const email of it.notify_form.recipients) { %><li><%= email %></li><% } %>
+          </ul>
+          <p class="warning" x-show="lastNotified" x-cloak>Déjà notifié le <span x-text="lastNotified"></span>.</p>
+          <label>Objet
+            <input type="text" x-model="notifySubject" maxlength="200">
+          </label>
+          <label>Message <span class="muted">({{date}} = date du signalement de chaque destinataire)</span>
+            <textarea x-model="notifyMessage" rows="7"></textarea>
+          </label>
+          <p>
+            <button type="button" class="btn btn-primary" :disabled="notifyBusy" @click="notify()">Envoyer</button>
+          </p>
+          <div class="error" x-show="notifyFailed.length" x-cloak>
+            <strong>Non envoyé à <span x-text="notifyFailed.length"></span> destinataire(s) :</strong>
+            <ul>
+              <template x-for="f in notifyFailed" :key="f.email">
+                <li><span x-text="f.email"></span> : <span x-text="f.error"></span></li>
+              </template>
+            </ul>
+          </div>
+        <% } %>
       </section>
     </aside>
   </div>
@@ -211,6 +246,35 @@
     </div>
     <div class="lightbox-scroll">
       <img :src="lightboxSrc" :class="zoom ? 'actual' : 'fit'" @click="zoom = !zoom" alt="Capture d'écran en grand">
+    </div>
+  </div>
+  <% } %>
+
+  <% if (!isChild && !r.issue_url && it.issue_form.can_create) { %>
+  <div class="modal" x-show="issueModal" x-cloak @keydown.escape.window="issueModal = false">
+    <div class="modal-box">
+      <h2>Créer l'issue <%= it.issue_form.provider === 'github' ? 'GitHub' : 'GitLab' %></h2>
+      <% if (it.issue_form.anonymize) { %>
+        <p class="muted">Anonymisation active : l'issue ne contiendra ni utilisateur, ni e-mail, ni payload, ni capture.</p>
+      <% } else if (it.issue_form.provider === 'github') { %>
+        <p class="muted">GitHub n'héberge pas de fichiers : l'issue contiendra un lien vers cette fiche Fixi.</p>
+      <% } else { %>
+        <p class="muted">La capture et la pièce jointe seront envoyées sur GitLab.</p>
+      <% } %>
+      <% if (it.children.length > 0) { %>
+        <p class="muted">L'issue indiquera le nombre d'utilisateurs touchés (<%= it.children.length %> doublon(s) rattaché(s)).</p>
+      <% } %>
+      <label>Titre
+        <input type="text" x-model="issueTitle" maxlength="255">
+      </label>
+      <label>Labels (séparés par des virgules)
+        <input type="text" x-model="issueLabels">
+      </label>
+      <p class="error" x-show="issueError" x-text="issueError"></p>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" :disabled="issueBusy" @click="createIssue()">Créer l'issue</button>
+        <button type="button" class="btn" @click="issueModal = false">Annuler</button>
+      </div>
     </div>
   </div>
   <% } %>

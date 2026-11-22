@@ -22,22 +22,30 @@ import { registerAdminReportRoutes } from './routes/admin/reports.js';
 import { registerReportRoutes } from './routes/public/reports.js';
 import { registerWidgetRoute } from './routes/public/widget.js';
 import { LIMITS } from '../shared/types.js';
+import { createMailer, type Mailer } from './services/mailer.js';
 import { StorageService } from './services/storage.js';
 
 export interface BuildAppOptions {
   config: Config;
   /** Provide an already opened database (tests use ':memory:'); otherwise it is opened from the config. */
   db?: DB;
+  /** Replace the SMTP mailer (tests); otherwise it is built from the SMTP_* configuration. */
+  mailer?: Mailer;
 }
 
-export async function buildApp({ config, db }: BuildAppOptions): Promise<FastifyInstance> {
+export async function buildApp({ config, db, mailer }: BuildAppOptions): Promise<FastifyInstance> {
   const database = db ?? openDatabase(config.databasePath);
-  const ctx: AppContext = { config, db: database, storage: new StorageService(config.storageDir) };
-
   const app = Fastify({
     logger: config.nodeEnv === 'test' ? false : { level: 'info' },
     trustProxy: config.trustProxy,
   });
+
+  const ctx: AppContext = {
+    config,
+    db: database,
+    storage: new StorageService(config.storageDir),
+    mailer: mailer ?? createMailer(config.smtp, app.log),
+  };
 
   app.setErrorHandler((error: unknown, req, reply) => {
     if (error instanceof ZodError) {

@@ -72,10 +72,13 @@ describe('admin pages', () => {
     expect(res.body).toContain('n&#39;existe pas'); // Eta escapes the apostrophe
   });
 
-  it('shows the disabled lot 4 placeholders on the detail page', async () => {
-    const id = addReport(env.db, makeApp(env.db));
+  it('shows the issue button and the notify panel states on the detail page', async () => {
+    const id = addReport(env.db, makeApp(env.db, { issue_provider: 'gitlab', issue_project: '42' }));
     const res = await page(`/admin/reports/${id}`);
-    expect(res.body).toContain('bientôt');
+    // GitLab is not configured in the test environment: the reason is shown instead of the button
+    expect(res.body).toContain('GITLAB_URL ou GITLAB_TOKEN manque');
+    expect(res.body).toContain('Disponible quand le statut');
+    expect(res.body).not.toContain('bientôt');
   });
 
   it('renders the settings page', async () => {

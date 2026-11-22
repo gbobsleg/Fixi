@@ -8,6 +8,7 @@ import type { Config } from '../src/server/config.js';
 import { openDatabase, type DB } from '../src/server/db/index.js';
 import { createApp, type App } from '../src/server/repositories/apps.js';
 import { insertReport } from '../src/server/repositories/reports.js';
+import type { Mail, Mailer } from '../src/server/services/mailer.js';
 
 export const ADMIN_PASSWORD = 'correct-horse-battery';
 export const TEST_ORIGIN = 'http://localhost:5173';
@@ -26,7 +27,23 @@ export interface TestEnv {
   close: () => Promise<void>;
 }
 
-export async function makeTestApp(overrides: Partial<Config> = {}): Promise<TestEnv> {
+/** In-memory mailer: records every mail, and rejects for the addresses listed in `failFor`. */
+export function makeFakeMailer() {
+  const sent: Mail[] = [];
+  const failFor = new Set<string>();
+  const mailer: Mailer = {
+    async sendMail(mail) {
+      if (failFor.has(mail.to)) throw new Error(`550 mailbox unavailable: ${mail.to}`);
+      sent.push(mail);
+    },
+  };
+  return { mailer, sent, failFor };
+}
+
+export async function makeTestApp(
+  overrides: Partial<Config> = {},
+  extras: { mailer?: Mailer } = {},
+): Promise<TestEnv> {
   const dir = mkdtempSync(join(tmpdir(), 'fixi-test-'));
   const config: Config = {
     nodeEnv: 'test',
@@ -48,7 +65,7 @@ export async function makeTestApp(overrides: Partial<Config> = {}): Promise<Test
     ...overrides,
   };
   const db = openDatabase(':memory:');
-  const app = await buildApp({ config, db });
+  const app = await buildApp({ config, db, mailer: extras.mailer });
   await app.ready();
   return {
     app,

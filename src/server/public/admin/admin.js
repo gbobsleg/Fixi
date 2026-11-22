@@ -75,6 +75,18 @@ document.addEventListener('alpine:init', () => {
     attachSearched: false,
     parents: [],
     markdownPromise: null,
+    // issue creation
+    issueModal: false,
+    issueTitle: '',
+    issueLabels: '',
+    issueError: '',
+    issueBusy: false,
+    // user notification
+    notifySubject: '',
+    notifyMessage: '',
+    lastNotified: '',
+    notifyBusy: false,
+    notifyFailed: [],
 
     init() {
       const d = this.$root.dataset;
@@ -85,6 +97,11 @@ document.addEventListener('alpine:init', () => {
       this.status = d.status;
       this.notes = d.notes;
       this.issueUrl = d.issueUrl;
+      this.issueTitle = d.issueTitle;
+      this.issueLabels = d.issueLabels;
+      this.notifySubject = d.notifySubject;
+      this.notifyMessage = d.notifyMessage;
+      this.lastNotified = d.lastNotified;
       // Preloaded so that the copy happens right inside the click (clipboard needs a user gesture).
       this.markdownPromise = this.loadMarkdown();
     },
@@ -152,6 +169,41 @@ document.addEventListener('alpine:init', () => {
       if (!res.ok) { this.say('', errorText(res)); return; }
       if (options && options.reload === false) { this.say('Enregistré.'); return; }
       window.location.reload();
+    },
+
+    openIssue() {
+      this.issueError = '';
+      this.issueModal = true;
+    },
+
+    async createIssue() {
+      this.issueBusy = true;
+      this.issueError = '';
+      const labels = this.issueLabels.split(',').map((l) => l.trim()).filter(Boolean);
+      const res = await api('POST', '/api/admin/reports/' + this.id + '/issue', { title: this.issueTitle, labels });
+      this.issueBusy = false;
+      // On failure the ticket is untouched: the modal stays open with the tracker's message.
+      if (!res.ok) { this.issueError = errorText(res); return; }
+      window.location.reload();
+    },
+
+    async notify() {
+      if (this.lastNotified && !window.confirm('Ce signalement a déjà été notifié le ' + this.lastNotified + '. Envoyer à nouveau ?')) return;
+      this.notifyBusy = true;
+      this.notifyFailed = [];
+      this.say('', '');
+      const res = await api('POST', '/api/admin/reports/' + this.id + '/notify', {
+        subject: this.notifySubject,
+        message: this.notifyMessage,
+      });
+      this.notifyBusy = false;
+      if (!res.ok) { this.say('', errorText(res)); return; }
+      const { sent, failed, last_notified_label: label } = res.data;
+      this.notifyFailed = failed;
+      // The server only moves last_notified_at when at least one e-mail left.
+      this.lastNotified = label || '';
+      if (sent === 0) this.say('', "Aucun e-mail n'a pu être envoyé.");
+      else this.say(sent + ' e-mail(s) envoyé(s)' + (failed.length ? ', ' + failed.length + ' en échec (voir ci-dessous).' : '.'));
     },
 
     toggleAttach() {
@@ -286,7 +338,8 @@ document.addEventListener('alpine:init', () => {
         '  data-user="<?= h($user) ?>"',
         '  data-user-email="<?= h($userEmail) ?>"',
         '  data-version="<?= h($gitVersion) ?>"',
-        '  defer></script>',
+        '  defer>',
+        '</script>',
       ].join('\n');
     },
 
