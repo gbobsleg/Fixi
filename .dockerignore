@@ -1,0 +1,11 @@
+node_modules
+dist
+data
+storage
+.env
+.git
+*.log
+tests
+test-host
+PLAN.md
+Cahier des Charges - Fixi.md

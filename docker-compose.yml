@@ -1,0 +1,24 @@
+# Example deployment. Put Fixi behind a reverse proxy that terminates HTTPS.
+#
+# Secrets live in a `.env` file next to this one (see .env.example).
+# IMPORTANT: wrap ADMIN_PASSWORD_HASH in single quotes there, e.g.
+#   ADMIN_PASSWORD_HASH='$2b$12$....'
+# Otherwise Docker Compose treats each '$' as a variable and corrupts the hash.
+services:
+  fixi:
+    build: .
+    image: fixi:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      TRUST_PROXY: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - fixi-data:/app/data
+      - fixi-storage:/app/storage
+
+volumes:
+  fixi-data:
+  fixi-storage:
