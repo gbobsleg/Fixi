@@ -13,8 +13,11 @@ services:
     environment:
       NODE_ENV: production
       TRUST_PROXY: "true"
+    # Loopback only: the reverse proxy is the single entry point. Published on all interfaces, the port
+    # would be reachable from the Internet without HTTPS (and Docker bypasses the host firewall).
+    # FIXI_PORT (in .env) changes the host port when 3000 is already taken.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:${FIXI_PORT:-3000}:3000"
     volumes:
       - fixi-data:/app/data
       - fixi-storage:/app/storage
