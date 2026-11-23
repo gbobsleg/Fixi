@@ -32,7 +32,7 @@
   <p class="notice" x-show="notice" x-text="notice"></p>
 
   <section class="card toolbar">
-    <button type="button" class="btn btn-primary" @click="copyMarkdown()">Copier pour Cursor</button>
+    <button type="button" class="btn btn-primary" @click="copyMarkdown()">Copier le rapport</button>
     <% if (r.screenshot_path) { %>
       <button type="button" class="btn" @click="copyImage()">Copier l'image</button>
     <% } %>

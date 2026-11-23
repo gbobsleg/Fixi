@@ -120,7 +120,7 @@ document.addEventListener('alpine:init', () => {
     async copyMarkdown() {
       try {
         await navigator.clipboard.writeText(await this.markdownPromise);
-        this.say('Rapport Markdown copié. Collez-le dans Cursor.');
+        this.say('Rapport Markdown copié.');
       } catch {
         this.say('', 'Copie impossible (le presse-papiers exige HTTPS ou localhost). Utilisez « Télécharger .md ».');
       }
@@ -134,7 +134,7 @@ document.addEventListener('alpine:init', () => {
           return r.blob();
         });
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-        this.say('Image copiée. Collez-la dans Cursor avec Ctrl+V.');
+        this.say('Image copiée. Collez-la avec Ctrl+V.');
       } catch {
         this.say('', "Copie de l'image impossible dans ce navigateur : utilisez « Télécharger la capture ».");
       }

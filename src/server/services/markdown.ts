@@ -138,7 +138,7 @@ export function countReporters(report: ReportRow, children: ReportRow[]): number
 }
 
 /**
- * Builds the "Cursor-Ready" report. The private `admin_notes` field is deliberately never read here.
+ * Builds the technical report (for an AI assistant, an issue or a teammate). The private `admin_notes` field is deliberately never read here.
  */
 export function buildReportMarkdown(
   report: ReportRow,

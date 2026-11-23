@@ -58,7 +58,7 @@ export function buildReportDetail(ctx: AppContext, id: number) {
   const children = listChildren(ctx.db, row.id);
   const fixiLink = `${ctx.config.appBaseUrl}/admin/reports/${row.id}`;
 
-  // The copied Markdown is meant for Cursor (internal use): it is never anonymized.
+  // The copied Markdown is for internal use (AI assistant, teammate): it is never anonymized.
   const markdown = buildReportMarkdown(row, children, {
     app,
     anonymize: false,
