@@ -1,6 +1,7 @@
 import { domToCanvas } from 'modern-screenshot';
 import { LIMITS } from '../shared/types.js';
 import { FIXI_ROOT_ID } from './breadcrumbs/click.js';
+import { embeddedFontCss } from './fonts.js';
 import { debug } from './native.js';
 
 export interface Capture {
@@ -181,11 +182,16 @@ async function renderViewport(): Promise<HTMLCanvasElement> {
   const backgroundColor = pageBackground();
 
   const large = document.getElementsByTagName('*').length > PRUNE_MIN_ELEMENTS;
+  const filter = large ? viewportFilter() : keepNode; // measured now, before any await lets the page move
+  // Our own font embedding (icon fonts from a CDN); empty → the library's default detection.
+  const fontCss = await embeddedFontCss();
+  const fontOptions = fontCss ? { font: { cssText: fontCss } } : {};
 
   try {
     return await domToCanvas(document.body ?? html, {
       ...baseOptions,
-      filter: large ? viewportFilter() : keepNode,
+      ...fontOptions,
+      filter,
       backgroundColor,
       width,
       height,
@@ -194,7 +200,12 @@ async function renderViewport(): Promise<HTMLCanvasElement> {
     });
   } catch (err) {
     debug('viewport render failed, falling back to full page + crop', err);
-    const full = await domToCanvas(html, { ...baseOptions, backgroundColor, features: { restoreScrollPosition: false } });
+    const full = await domToCanvas(html, {
+      ...baseOptions,
+      ...fontOptions,
+      backgroundColor,
+      features: { restoreScrollPosition: false },
+    });
     const cropped = document.createElement('canvas');
     cropped.width = width;
     cropped.height = height;
