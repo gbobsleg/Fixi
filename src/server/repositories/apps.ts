@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { DEFAULT_WIDGET_COLOR } from '../../shared/types.js';
 import type { DB } from '../db/index.js';
 
 export type IssueProvider = 'gitlab' | 'github';
@@ -13,6 +14,8 @@ export interface App {
   issue_project: string | null;
   issue_default_labels: string | null;
   issue_anonymize: boolean;
+  /** `#rrggbb`, color of the widget's tab and buttons in this app. */
+  widget_color: string;
   created_at: string;
 }
 
@@ -24,6 +27,8 @@ export interface AppInput {
   issue_project: string | null;
   issue_default_labels: string | null;
   issue_anonymize: boolean;
+  /** Defaults to DEFAULT_WIDGET_COLOR on creation; left unchanged on update when absent. */
+  widget_color?: string;
 }
 
 interface AppRow {
@@ -36,6 +41,7 @@ interface AppRow {
   issue_project: string | null;
   issue_default_labels: string | null;
   issue_anonymize: number;
+  widget_color: string;
   created_at: string;
 }
 
@@ -72,8 +78,8 @@ export function createApp(db: DB, input: AppInput): App {
   const info = db
     .prepare(
       `INSERT INTO apps (slug, name, api_key, allowed_origins, issue_provider, issue_project,
-                         issue_default_labels, issue_anonymize, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                         issue_default_labels, issue_anonymize, widget_color, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.slug,
@@ -84,6 +90,7 @@ export function createApp(db: DB, input: AppInput): App {
       input.issue_project,
       input.issue_default_labels,
       input.issue_anonymize ? 1 : 0,
+      input.widget_color ?? DEFAULT_WIDGET_COLOR,
       new Date().toISOString(),
     );
   return getAppById(db, Number(info.lastInsertRowid))!;
@@ -93,7 +100,7 @@ export function updateApp(db: DB, id: number, input: AppInput): App | undefined 
   const info = db
     .prepare(
       `UPDATE apps SET slug = ?, name = ?, allowed_origins = ?, issue_provider = ?, issue_project = ?,
-                       issue_default_labels = ?, issue_anonymize = ?
+                       issue_default_labels = ?, issue_anonymize = ?, widget_color = COALESCE(?, widget_color)
        WHERE id = ?`,
     )
     .run(
@@ -104,6 +111,7 @@ export function updateApp(db: DB, id: number, input: AppInput): App | undefined 
       input.issue_project,
       input.issue_default_labels,
       input.issue_anonymize ? 1 : 0,
+      input.widget_color ?? null, // absent: keep the current color
       id,
     );
   return info.changes > 0 ? getAppById(db, id) : undefined;

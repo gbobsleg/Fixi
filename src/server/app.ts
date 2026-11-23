@@ -98,7 +98,7 @@ export async function buildApp({ config, db, mailer }: BuildAppOptions): Promise
     }
   });
 
-  registerWidgetRoute(app);
+  registerWidgetRoute(app, ctx);
   registerReportRoutes(app, ctx);
   registerAdminAuthRoutes(app, ctx);
   registerAdminAppRoutes(app, ctx);

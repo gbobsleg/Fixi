@@ -3,6 +3,7 @@ import { FIXI_ROOT_ID } from '../breadcrumbs/click.js';
 import { captureViewport } from '../capture.js';
 import type { WidgetConfig } from '../config.js';
 import { debug } from '../native.js';
+import { loadTheme } from '../theme.js';
 import { h, icon, ICON_ALERT } from './dom.js';
 import { openModal } from './modal.js';
 import { STYLES } from './styles.js';
@@ -45,6 +46,10 @@ export function createUI(getConfig: () => WidgetConfig, store: TimelineStore): F
 
     // On <html>, not <body>: apps that swap the whole body (Turbo, htmx boost) must not remove it.
     document.documentElement.append(host);
+
+    // Color configured for this app in Fixi (remembered color applied at once, then refreshed).
+    const { apiBase, app } = getConfig();
+    void loadTheme(host, apiBase, app);
   }
 
   async function open(): Promise<void> {

@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { CATEGORIES, JS_ERROR_SOURCES, LIMITS, NAV_KINDS, STATUSES } from '../shared/types.js';
+import {
+  CATEGORIES,
+  JS_ERROR_SOURCES,
+  LIMITS,
+  NAV_KINDS,
+  STATUSES,
+  WIDGET_COLOR_RE,
+} from '../shared/types.js';
 
 /** String that is silently truncated (never rejected) when too long. */
 const clip = (max: number) => z.string().transform((v) => v.slice(0, max));
@@ -106,6 +113,12 @@ export const appInputSchema = z.object({
   issue_project: z.string().trim().max(200).nullable().default(null),
   issue_default_labels: z.string().trim().max(300).nullable().default(null),
   issue_anonymize: z.boolean().default(false),
+  widget_color: z
+    .string()
+    .trim()
+    .regex(WIDGET_COLOR_RE, 'expected #rrggbb')
+    .transform((c) => c.toLowerCase())
+    .optional(), // creation: DEFAULT_WIDGET_COLOR; update: unchanged
 });
 
 export const loginSchema = z.object({

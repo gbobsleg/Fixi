@@ -234,6 +234,7 @@ document.addEventListener('alpine:init', () => {
     error: '',
     notice: '',
     copied: false,
+    defaultColor: '#318f9b',
 
     init() {
       this.baseUrl = this.$root.dataset.baseUrl;
@@ -245,7 +246,29 @@ document.addEventListener('alpine:init', () => {
       return {
         id: null, slug: '', name: '', origins: '',
         issue_provider: '', issue_project: '', issue_default_labels: '', issue_anonymize: false,
+        widget_color: this.defaultColor,
       };
+    },
+
+    /** Same rules as src/widget/theme.ts: invalid value = default color. */
+    previewColor() {
+      const c = this.form && this.form.widget_color;
+      return /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : this.defaultColor;
+    },
+
+    /** Text on the color: white if it reaches 3:1 (WCAG, bold text), else dark — same rule as the widget. */
+    previewText() {
+      const hex = this.previewColor();
+      const lum = (h) => {
+        const lin = (i) => {
+          const s = parseInt(h.slice(i, i + 2), 16) / 255;
+          return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+        };
+        return 0.2126 * lin(1) + 0.7152 * lin(3) + 0.0722 * lin(5);
+      };
+      const ratio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+      const l = lum(hex);
+      return ratio(l, 1) >= 3 ? '#ffffff' : '#1f2a30';
     },
 
     async load() {
@@ -277,6 +300,7 @@ document.addEventListener('alpine:init', () => {
         issue_project: a.issue_project || '',
         issue_default_labels: a.issue_default_labels || '',
         issue_anonymize: a.issue_anonymize,
+        widget_color: a.widget_color || this.defaultColor,
       };
     },
 
@@ -292,6 +316,7 @@ document.addEventListener('alpine:init', () => {
         issue_project: f.issue_project.trim() || null,
         issue_default_labels: f.issue_default_labels.trim() || null,
         issue_anonymize: !!f.issue_anonymize,
+        widget_color: this.previewColor().toLowerCase(),
       };
       const res = f.id
         ? await api('PUT', '/api/admin/apps/' + f.id, body)

@@ -54,6 +54,21 @@
         <input type="checkbox" x-model="form.issue_anonymize">
         Anonymiser les issues (sans utilisateur, e-mail, payloads ni capture)
       </label>
+      <div class="span color-row">
+        <label>Couleur du widget
+          <span class="color-field">
+            <input type="color" x-model="form.widget_color" aria-label="Choisir la couleur">
+            <input type="text" x-model="form.widget_color" pattern="#[0-9a-fA-F]{6}" maxlength="7" required>
+            <button type="button" class="link" @click="form.widget_color = defaultColor">Par défaut</button>
+          </span>
+        </label>
+        <div class="widget-preview" aria-hidden="true"
+             x-effect="$el.style.setProperty('--preview', previewColor()); $el.style.setProperty('--preview-text', previewText())">
+          <span class="muted">Aperçu</span>
+          <span class="preview-tab">Signaler un problème</span>
+          <span class="preview-btn">Envoyer</span>
+        </div>
+      </div>
       <div class="span actions">
         <button type="submit" class="btn btn-primary" x-text="form.id ? 'Enregistrer' : 'Créer'"></button>
         <button type="button" class="btn" x-show="form.id" @click="reset()">Annuler</button>

@@ -1,12 +1,15 @@
 import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../context.js';
 import { isOriginAllowedByAnyApp } from '../repositories/apps.js';
+import { WIDGET_CONFIG_PATH } from '../routes/public/widget.js';
 import { pathOf } from './auth.js';
 
 const REPORTS_PATH = '/api/reports';
+/** Paths read by the widget from the host page (other origin). */
+const PUBLIC_PATHS = new Set([REPORTS_PATH, WIDGET_CONFIG_PATH]);
 
 /**
- * CORS for POST /api/reports. The Origin is echoed back only if at least one application lists it;
+ * CORS for POST /api/reports and GET /api/widget/config (a simple GET: no preflight). The Origin is echoed back only if at least one application lists it;
  * the strict check (origin <-> the application named in the payload) happens in the route.
  */
 export function registerPublicCors(app: FastifyInstance, ctx: AppContext): void {
@@ -19,7 +22,7 @@ export function registerPublicCors(app: FastifyInstance, ctx: AppContext): void 
 
   // Headers are added on every response (including errors), so the widget can read 401/403/413 bodies.
   app.addHook('onSend', async (req, reply, payload) => {
-    if (pathOf(req) !== REPORTS_PATH) return payload;
+    if (!PUBLIC_PATHS.has(pathOf(req))) return payload;
     reply.header('Vary', 'Origin');
     const origin = req.headers.origin;
     if (origin && isOriginAllowedByAnyApp(ctx.db, origin)) {

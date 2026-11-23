@@ -71,6 +71,12 @@ export interface ReportPayload {
   timeline: TimelineEvent[];
 }
 
+/** Default color of the widget (tab, buttons, focus): the teal of Shifti and Flowi. */
+export const DEFAULT_WIDGET_COLOR = '#318f9b';
+
+/** A widget color as stored and sent: `#rrggbb`. */
+export const WIDGET_COLOR_RE = /^#[0-9a-f]{6}$/i;
+
 /** Hard limits shared by widget and server. */
 export const LIMITS = {
   timelineMaxEvents: 40,

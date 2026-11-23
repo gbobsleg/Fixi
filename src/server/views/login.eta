@@ -1,14 +1,18 @@
-<section class="card login" x-data="loginForm" x-cloak>
-  <h1>Fixi</h1>
-  <p class="muted">Connexion à l'administration</p>
-  <form @submit.prevent="submit()">
-    <label>Identifiant
-      <input type="text" x-model="username" autocomplete="username" required autofocus>
-    </label>
-    <label>Mot de passe
-      <input type="password" x-model="password" autocomplete="current-password" required>
-    </label>
-    <p class="error" x-show="error" x-text="error"></p>
-    <button type="submit" class="btn btn-primary" :disabled="busy">Se connecter</button>
-  </form>
-</section>
+<div class="login" x-data="loginForm" x-cloak>
+  <div class="login-brand"><%~ include('./partials/logo', { cls: 'logo' }) %><span>Fixi</span></div>
+  <section class="card">
+    <h1>Connexion</h1>
+    <form @submit.prevent="submit()">
+      <label>Identifiant
+        <input type="text" x-model="username" autocomplete="username" required autofocus>
+      </label>
+      <label>Mot de passe
+        <input type="password" x-model="password" autocomplete="current-password" required>
+      </label>
+      <p class="error" x-show="error" x-text="error"></p>
+      <div class="login-foot">
+        <button type="submit" class="btn btn-primary" :disabled="busy">Se connecter</button>
+      </div>
+    </form>
+  </section>
+</div>

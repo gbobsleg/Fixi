@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= it.title %> · Fixi</title>
+  <link rel="icon" href="/public/admin/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/public/admin/admin.css">
   <script src="/public/admin/admin.js"></script>
   <script defer src="/public/vendor/alpine.min.js"></script>
@@ -11,14 +12,16 @@
 <body>
 <% if (it.nav) { %>
   <header class="topbar" x-data="logoutButton">
-    <a class="brand" href="/admin">Fixi</a>
+   <div class="topbar-inner">
+    <a class="brand" href="/admin"><%~ include('./partials/logo', { cls: 'logo' }) %>Fixi</a>
     <nav>
-      <a href="/admin">Signalements</a>
-      <a href="/admin/settings">Paramètres</a>
+      <a href="/admin" class="<%= it.active === 'reports' ? 'active' : '' %>">Signalements</a>
+      <a href="/admin/settings" class="<%= it.active === 'settings' ? 'active' : '' %>">Paramètres</a>
     </nav>
     <span class="spacer"></span>
-    <span class="muted"><%= it.adminUser %></span>
-    <button type="button" class="btn btn-small" @click="logout()">Déconnexion</button>
+    <span class="user"><%= it.adminUser %></span>
+    <button type="button" class="btn btn-small btn-on-dark" @click="logout()">Déconnexion</button>
+   </div>
   </header>
 <% } %>
   <main class="<%= it.nav ? 'page' : 'page page-narrow' %>">

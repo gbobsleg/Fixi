@@ -101,6 +101,7 @@ export function registerAdminPages(app: FastifyInstance, ctx: AppContext): void 
     };
     return render(reply, 'reports-list.eta', {
       title: 'Signalements',
+      active: 'reports',
       apps: listApps(db),
       filters,
       result,
@@ -115,14 +116,15 @@ export function registerAdminPages(app: FastifyInstance, ctx: AppContext): void 
       return reply.code(404).view('error.eta', {
         ...common,
         nav: true,
+        active: 'reports',
         title: 'Introuvable',
         message: `Le signalement #${id} n'existe pas.`,
       });
     }
-    return render(reply, 'report-detail.eta', { title: `Signalement #${id}`, ...detail });
+    return render(reply, 'report-detail.eta', { title: `Signalement #${id}`, active: 'reports', ...detail });
   });
 
   app.get('/admin/settings', async (_req, reply) =>
-    render(reply, 'settings.eta', { title: 'Paramètres' }),
+    render(reply, 'settings.eta', { title: 'Paramètres', active: 'settings' }),
   );
 }
