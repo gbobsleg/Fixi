@@ -2,7 +2,7 @@ import { domToCanvas } from 'modern-screenshot';
 import { LIMITS } from '../shared/types.js';
 import { FIXI_ROOT_ID } from './breadcrumbs/click.js';
 import { embeddedFontCss } from './fonts.js';
-import { debug } from './native.js';
+import { blobToDataUrl, debug, quietFetch, RESOURCE_TIMEOUT_MS } from './native.js';
 
 export interface Capture {
   blob: Blob;
@@ -152,11 +152,29 @@ export const CAPTURED_STYLE_PROPERTIES = [
   'stroke-linejoin',
 ];
 
+const TRANSPARENT_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+/**
+ * Images of the page (<img>, CSS background-image), downloaded for the screenshot. By default the library
+ * uses `window.fetch`, which the breadcrumbs wrap: every image would appear in the report's timeline as if
+ * the host app had requested it. Here they go through `quietFetch` (native fetch, 3 s max). A failed image
+ * is drawn transparent: returning `false` would make the library retry with `window.fetch`.
+ */
+export async function fetchImage(url: string): Promise<string> {
+  if (url.startsWith('data:')) return url;
+  const res = await quietFetch(url, { cache: 'force-cache' });
+  if (!res) return TRANSPARENT_PIXEL;
+  return blobToDataUrl(await res.blob()).catch(() => TRANSPARENT_PIXEL);
+}
+
 const baseOptions = {
   scale: 1,
   filter: keepNode,
   onCloneEachNode: maskClone,
-  timeout: CAPTURE_TIMEOUT_MS,
+  // Per resource (image download, media load), NOT for the whole capture: well below CAPTURE_TIMEOUT_MS
+  // so that one slow image cannot eat the whole budget.
+  timeout: RESOURCE_TIMEOUT_MS,
+  fetchFn: fetchImage,
   includeStyleProperties: CAPTURED_STYLE_PROPERTIES,
 };
 
@@ -171,9 +189,11 @@ const baseOptions = {
  *  - shift the page by the scroll offset with `position: relative; top/left` (NOT a transform, for the
  *    same containing-block reason), in a canvas the size of the viewport.
  *
- * Fallback (if that render throws): render the whole page then crop the visible area.
+ * Fallback (if that render throws): render the whole page then crop the visible area — but only while
+ * the capture budget is not spent. A render cannot be cancelled (modern-screenshot takes no AbortSignal):
+ * once `captureViewport` has given up, starting another one would only burn CPU while the user types.
  */
-async function renderViewport(): Promise<HTMLCanvasElement> {
+async function renderViewport(expired: () => boolean = () => false): Promise<HTMLCanvasElement> {
   const html = document.documentElement;
   const width = html.clientWidth; // excludes the scrollbar
   const height = html.clientHeight;
@@ -186,6 +206,7 @@ async function renderViewport(): Promise<HTMLCanvasElement> {
   // Our own font embedding (icon fonts from a CDN); empty → the library's default detection.
   const fontCss = await embeddedFontCss();
   const fontOptions = fontCss ? { font: { cssText: fontCss } } : {};
+  if (expired()) throw new Error('capture abandoned');
 
   try {
     return await domToCanvas(document.body ?? html, {
@@ -199,6 +220,7 @@ async function renderViewport(): Promise<HTMLCanvasElement> {
       style: { position: 'relative', top: `${-sy}px`, left: `${-sx}px` },
     });
   } catch (err) {
+    if (expired()) throw err;
     debug('viewport render failed, falling back to full page + crop', err);
     const full = await domToCanvas(html, {
       ...baseOptions,
@@ -237,11 +259,15 @@ export async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob |
 /** Captures the visible area. Resolves to null (never throws) if it fails or takes more than 8 s. */
 export async function captureViewport(): Promise<Capture | null> {
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let expired = false;
   try {
     const canvas = await Promise.race([
-      renderViewport(),
+      renderViewport(() => expired),
       new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error('capture timeout')), CAPTURE_TIMEOUT_MS);
+        timer = setTimeout(() => {
+          expired = true; // the render still running, if any, will not start the fallback
+          reject(new Error('capture timeout'));
+        }, CAPTURE_TIMEOUT_MS);
       }),
     ]);
     const blob = await canvasToPngBlob(canvas);

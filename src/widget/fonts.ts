@@ -13,9 +13,7 @@
 // Which fonts? Exactly those the browser has LOADED (`document.fonts`): a browser only downloads a web font
 // when some text on the page uses it, so this is the list of fonts the page really needs.
 
-import { debug, nativeFetch } from './native.js';
-
-const FETCH_TIMEOUT_MS = 3000;
+import { blobToDataUrl, debug, quietFetch } from './native.js';
 
 export interface FontFaceDescriptor {
   family: string;
@@ -58,30 +56,8 @@ export function pickFontSource(src: string, base: string): { url: string; format
   );
 }
 
-async function fetchWithTimeout(url: string): Promise<Response | null> {
-  // The page's fetch is wrapped by the breadcrumbs: Fixi's own downloads must not show up in the timeline.
-  if (!nativeFetch) return null;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const res = await nativeFetch(url, { mode: 'cors', credentials: 'omit', signal: ctrl.signal });
-    return res.ok ? res : null;
-  } catch (err) {
-    debug('font fetch failed', url, err);
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(blob);
-  });
-}
+// Public CDN files: no cookies needed.
+const fetchWithTimeout = (url: string) => quietFetch(url, { mode: 'cors', credentials: 'omit' });
 
 // Kept for the whole page life: the second capture does not download anything again.
 const fontCache = new Map<string, Promise<string | null>>();
