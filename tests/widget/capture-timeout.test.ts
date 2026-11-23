@@ -79,7 +79,9 @@ describe('fetchImage', () => {
   });
 
   it('downloads through quietFetch (never window.fetch) and returns a data: URL', async () => {
-    quietFetch.mockResolvedValue(new Response('img', { headers: { 'content-type': 'image/png' } }));
+    // Not a real Response: under Node 22 its blob() is a Node Blob, which jsdom's FileReader rejects.
+    // In a browser, fetch and FileReader share the same Blob, as they do here.
+    quietFetch.mockResolvedValue({ blob: async () => new Blob(['img'], { type: 'image/png' }) });
     await expect(fetchImage('http://localhost/shifti/img/avatar.png')).resolves.toMatch(/^data:image\/png;base64,/);
     expect(quietFetch).toHaveBeenCalledWith('http://localhost/shifti/img/avatar.png', { cache: 'force-cache' });
   });
