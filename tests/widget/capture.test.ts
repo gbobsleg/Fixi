@@ -1,7 +1,22 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FIXI_ROOT_ID } from '../../src/widget/breadcrumbs/click.js';
-import { viewportFilter } from '../../src/widget/capture.js';
+import { stripNonXmlAttributes, viewportFilter } from '../../src/widget/capture.js';
+
+describe('stripNonXmlAttributes', () => {
+  it('removes Alpine / Vue shorthand attributes, which would blank the whole capture', () => {
+    document.body.innerHTML =
+      '<button id="b" class="btn" data-x="1" aria-label="ok" x-on:click="go" @click="go" :class="{a: 1}" @input.debounce.300ms="s" v-bind:title="t">Go</button>' +
+      '<svg><use id="u" xlink:href="#i"></use></svg>';
+    const button = document.getElementById('b')!;
+    stripNonXmlAttributes(button);
+    expect(button.getAttributeNames().sort()).toEqual(['aria-label', 'class', 'data-x', 'id']);
+
+    const use = document.getElementById('u')!;
+    stripNonXmlAttributes(use);
+    expect(use.getAttributeNames()).toContain('xlink:href');
+  });
+});
 
 // jsdom has no layout: every box is given here by id (viewport = jsdom's 1024x768 window).
 const VISIBLE = { top: 10, bottom: 50, left: 0, right: 100, width: 100, height: 40 };

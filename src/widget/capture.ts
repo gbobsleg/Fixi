@@ -79,8 +79,24 @@ export function viewportFilter(doc: Document = document): (node: Node) => boolea
   };
 }
 
-/** Applied to the CLONE only: hides `data-fixi-mask` blocks and password values. */
+// A name the XML serializer can write: no `@`, no `:` except the XML namespaces SVG uses.
+const XML_SAFE_ATTRIBUTE = /^(?:[A-Za-z_][\w.-]*|(?:xlink|xml|xmlns):[A-Za-z_][\w.-]*)$/;
+
+/**
+ * The clone is serialized as XML inside an SVG image. Alpine / Vue shorthand attributes (`@click`,
+ * `:class`, `@input.debounce`) are valid HTML but not valid XML names: a single one makes the browser
+ * refuse the WHOLE image, silently, and the capture comes out blank (background color only).
+ * They only matter to the live page, so they are removed from the clone.
+ */
+export function stripNonXmlAttributes(cloned: Element): void {
+  for (const { name } of Array.from(cloned.attributes)) {
+    if (!XML_SAFE_ATTRIBUTE.test(name)) cloned.removeAttribute(name);
+  }
+}
+
+/** Applied to the CLONE only: drops non-XML attributes, hides `data-fixi-mask` blocks and password values. */
 function maskClone(cloned: Node): void {
+  if (cloned instanceof Element) stripNonXmlAttributes(cloned);
   if (!(cloned instanceof HTMLElement)) return;
   if (cloned.hasAttribute('data-fixi-mask')) {
     cloned.replaceChildren();

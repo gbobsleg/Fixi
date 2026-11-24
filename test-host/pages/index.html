@@ -23,7 +23,8 @@
     <section class="card card-body mb-4" id="actions">
       <h2 class="h5">Provoquer des événements</h2>
       <div class="d-flex flex-wrap gap-2">
-        <button id="btn-ok" class="btn btn-secondary btn-sm">fetch 200</button>
+        <!-- Alpine / Vue shorthand attributes (inert here): they once blanked the whole capture. -->
+        <button id="btn-ok" class="btn btn-secondary btn-sm" @click="noop" :class="{ on: true }" x-on:keydown.enter="noop">fetch 200</button>
         <button id="btn-fetch500" class="btn btn-danger btn-sm">fetch POST → 500</button>
         <button id="btn-xhr422" class="btn btn-warning btn-sm">XHR POST → 422</button>
         <button id="btn-typeerror" class="btn btn-danger btn-sm">TypeError</button>
