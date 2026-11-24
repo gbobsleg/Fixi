@@ -8,7 +8,28 @@ Spécification : [Cahier des Charges - Fixi.md](Cahier%20des%20Charges%20-%20Fix
 
 ## Intégrer le widget dans une application
 
-Une seule balise dans le layout global de l'application hôte (aucun autre changement) :
+Le widget est le bouton « Signaler un problème » affiché dans l'application hôte. Côté application, une seule balise suffit. Mais Fixi doit d'abord connaître l'application : sans les étapes 1 et 2, l'envoi est refusé (403).
+
+### 1. Déclarer l'application dans Fixi
+
+Page **Paramètres** de l'admin, formulaire « Nouvelle application » :
+
+- **Identifiant technique** (le *slug*) : minuscules, chiffres et tirets, ex. `shifti`. Il devient `data-app` dans le code.
+- **Origines autorisées** : l'adresse de chaque site qui affiche le bouton, une par ligne. Seuls le protocole, l'hôte et le port comptent : `http://localhost/shifti` est enregistré comme `http://localhost`, car le navigateur n'envoie jamais le chemin.
+
+Exemples d'origines :
+
+| Environnement | Origine à déclarer |
+|---|---|
+| Production | `https://shifti.interne` |
+| Shifti en local sous WAMP | `http://localhost` |
+| Flowi en local (Node ou Docker) | l'adresse vue par le navigateur, ex. `http://localhost:3000` |
+
+Une origine locale autorise **toutes** les applications servies à cette adresse : retirez-la après vos tests.
+
+### 2. Copier le code d'intégration
+
+Après l'enregistrement, la page affiche le code d'intégration (le *snippet*) avec la clé de l'application :
 
 ```html
 <script
@@ -22,15 +43,30 @@ Une seule balise dans le layout global de l'application hôte (aucun autre chang
 ```
 
 - `data-app` et `data-api-key` sont obligatoires. Les autres attributs sont facultatifs.
-- L'origine de l'application (ex. `https://shifti.interne`) doit figurer dans les `allowed_origins` de l'application côté Fixi.
+- `data-user`, `data-user-email` et `data-version` viennent de l'application hôte (ex. CakePHP : `<?= h($user) ?>`). Ils sont relus à chaque signalement : l'application peut les modifier après le chargement, par exemple une fois l'utilisateur connecté.
+- La clé n'est pas un secret : elle est visible dans la page. Ce qui protège Fixi, ce sont les origines autorisées.
+
+### 3. L'insérer dans l'application
+
+Collez la balise une seule fois, dans le gabarit commun à toutes les pages (le *layout*).
+
+**Conseillé : sortir l'adresse de Fixi et la clé dans la configuration de l'hôte** (`.env`, fichier de paramètres…). Elles changent souvent d'un environnement à l'autre, et une valeur vide peut servir à désactiver le widget. Exemple de Flowi, dont les pages sont statiques : deux variables `FIXI_WIDGET_URL` et `FIXI_API_KEY`, et une route `/fixi-loader.js` qui génère la balise. Ce n'est pas une exigence de Fixi : une balise écrite en dur fonctionne aussi.
+
+### Options
+
 - `window.Fixi.open()` ouvre la fenêtre depuis un bouton de l'application.
 - `data-fixi-mask` sur un élément le remplace par un bloc gris dans la capture d'écran. Un clic dans cette zone n'enregistre pas son texte dans la chronologie, seulement son sélecteur.
-- Les champs mot de passe ne sont jamais lus. Les clés `password`, `token`, `secret`, `auth`, `cookie`, `csrf`, `api_key`… sont remplacées par `[REDACTED]` avant tout envoi. `pin` l'est aussi, mais seulement comme mot entier de la clé : `pin`, `supervisor_pin`, `newPin`, `pin-code` sont caviardés ; `spinner` ou `shipping` ne le sont pas.
-- `data-redact-keys` (facultatif) ajoute des clés à caviarder, séparées par des virgules. Exemple : `data-redact-keys="query,agent_matricule,nom,prenom"`.
+- `data-redact-keys` ajoute des clés à caviarder, séparées par des virgules. Exemple : `data-redact-keys="query,agent_matricule,nom,prenom"`.
   - Elles s'appliquent aux paramètres d'URL (requêtes réseau, navigation, URL de la page), aux corps de requête et de réponse, et au texte libre (`nom: Dupont`).
   - La comparaison porte sur la clé **entière**, sans tenir compte de la casse : `nom` caviarde `nom` et `NOM`, pas `nombre` ni `nomOffre`.
   - L'attribut est relu à chaque événement enregistré : il peut être modifié après le chargement.
-  - Le caviardage a lieu dans le navigateur, avant tout stockage. Les valeurs placées dans le **chemin** d'une URL (`/agents/12345`) ne sont pas couvertes.
+  - Les valeurs placées dans le **chemin** d'une URL (`/agents/12345`) ne sont pas couvertes.
+
+### Données protégées par défaut
+
+- Les champs mot de passe ne sont jamais lus.
+- Les clés `password`, `token`, `secret`, `auth`, `cookie`, `csrf`, `api_key`… sont remplacées par `[REDACTED]`. `pin` l'est aussi, mais seulement comme mot entier de la clé : `pin`, `supervisor_pin`, `newPin`, `pin-code` sont caviardés ; `spinner` ou `shipping` ne le sont pas.
+- Le caviardage a lieu dans le navigateur, avant tout stockage et tout envoi.
 
 ## Démarrage local
 
@@ -75,15 +111,9 @@ Dans un `docker-compose.yml`, chaque `$` d'un hash écrit en ligne doit être do
 
 Voir [.env.example](.env.example). Fixi refuse de démarrer, avec un message clair, s'il manque `APP_BASE_URL`, `ADMIN_USER`, `ADMIN_PASSWORD_HASH` ou `SESSION_SECRET`. Le SMTP et les trackers sont optionnels.
 
-## Intégrer le widget dans Shifti (WAMP) et Flowi (Docker)
+## Outils de tickets (GitLab et GitHub)
 
-1. Page **Paramètres** de l'admin : créer l'application, renseigner ses origines autorisées, copier le snippet.
-2. Coller le snippet dans le layout global (une seule fois). Les valeurs `data-user`, `data-user-email` et `data-version` viennent de l'application hôte (ex. CakePHP : `<?= h($user) ?>`).
-3. **Shifti en local sous WAMP** : ajouter `http://localhost` aux origines autorisées. **Flowi sous Docker** : ajouter l'origine telle que le navigateur la voit (ex. `http://localhost:8080`). Sans cela, l'envoi est refusé (403).
-
-## Trackers d'issues (GitLab et GitHub)
-
-Chaque application choisit son tracker dans **Paramètres** (GitLab, GitHub ou aucun), avec son projet et ses labels par défaut. Les tokens sont globaux, en variables d'environnement.
+Chaque application choisit son outil de tickets dans **Paramètres** (GitLab, GitHub ou aucun), avec son projet et ses labels par défaut. Les tokens sont globaux, en variables d'environnement.
 
 | Tracker | Variables | Projet | Token à créer |
 |---|---|---|---|
