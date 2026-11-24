@@ -18,7 +18,7 @@ export class GithubTracker implements IssueTracker {
 
   async createIssue(input: CreateIssueInput): Promise<{ number: number; url: string }> {
     if (!REPO_PATTERN.test(input.project)) {
-      throw new TrackerConfigError('Le projet GitHub doit être au format « owner/repo ».');
+      throw new TrackerConfigError('Le projet GitHub doit être au format « propriétaire/dépôt » (owner/repo).');
     }
     const res = await trackerFetch('GitHub', `${this.apiUrl}/repos/${input.project}/issues`, {
       method: 'POST',
@@ -32,7 +32,7 @@ export class GithubTracker implements IssueTracker {
       body: JSON.stringify({ title: input.title, body: input.body, labels: input.labels }),
     });
     if (!res.ok) {
-      throw new TrackerError(`GitHub a refusé la création de l'issue : ${await describeFailure(res)}`);
+      throw new TrackerError(`GitHub a refusé la création du ticket : ${await describeFailure(res)}`);
     }
     const issue = (await res.json()) as { number?: number; html_url?: string };
     if (typeof issue.number !== 'number' || !issue.html_url) {

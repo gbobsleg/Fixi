@@ -60,6 +60,11 @@ code { background: #edf1f2; padding: 1px 4px; border-radius: 4px; word-break: br
 /* Forms */
 label { display: block; font-weight: 600; font-size: 12.5px; }
 label.check { display: flex; align-items: center; gap: 6px; font-weight: 400; }
+label.check:has(.hint) { align-items: flex-start; }
+label.check:has(.hint) input { margin-top: 3px; }
+/* Help line under a field: what it is for and how to fill it. */
+.hint { display: block; margin-top: 4px; font-size: 12px; font-weight: 400; line-height: 1.45; color: var(--muted); }
+.hint code { font-size: 11.5px; white-space: nowrap; word-break: normal; }
 input[type=text], input[type=search], input[type=password], input[type=url], select, textarea {
   display: block; width: 100%; margin-top: 4px; padding: 7px 9px; font: inherit;
   border: 1px solid var(--input-border); border-radius: var(--radius); background: #fff; color: inherit;

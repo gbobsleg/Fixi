@@ -63,23 +63,23 @@
             <tr>
               <td class="nowrap muted"><%= ((e.t - base) / 1000).toFixed(1) %>s</td>
               <% if (e.type === 'nav') { %>
-                <td><span class="badge badge-gray">NAV</span></td>
-                <td><code><%= e.url %></code> <span class="muted">(<%= e.kind %>)</span></td>
+                <td><span class="badge badge-gray">Navigation</span></td>
+                <td><code><%= e.url %></code> <span class="muted">(<%= ({ load: "chargement", push: "changement d'adresse", replace: "adresse remplacée", pop: "précédent / suivant", hash: "ancre" })[e.kind] || e.kind %>)</span></td>
               <% } else if (e.type === 'click') { %>
-                <td><span class="badge badge-gray">CLICK</span></td>
+                <td><span class="badge badge-gray">Clic</span></td>
                 <td><code><%= e.selector %></code> <%= e.text ? '(' + e.text + ')' : '' %></td>
               <% } else if (e.type === 'net') { %>
-                <td><span class="badge <%= e.status === 0 || e.status >= 500 ? 'badge-orange' : (e.status >= 400 ? 'badge-yellow' : 'badge-gray') %>">NET</span></td>
+                <td><span class="badge <%= e.status === 0 || e.status >= 500 ? 'badge-orange' : (e.status >= 400 ? 'badge-yellow' : 'badge-gray') %>">Réseau</span></td>
                 <td>
                   <code><%= e.method %> <%= e.url %></code> → <strong><%= e.status === 0 ? 'erreur réseau' : e.status %></strong>
                   <span class="muted">(<%= Math.round(e.durationMs) %> ms<%= e.requestId ? ', ' + e.requestId : '' %>)</span>
-                  <% if (e.requestBody) { %><pre class="code"><strong>Payload</strong>
+                  <% if (e.requestBody) { %><pre class="code"><strong>Données envoyées</strong>
 <%= e.requestBody %></pre><% } %>
                   <% if (e.responseBody) { %><pre class="code"><strong>Réponse</strong>
 <%= e.responseBody %></pre><% } %>
                 </td>
               <% } else { %>
-                <td><span class="badge badge-purple">JS_ERROR</span></td>
+                <td><span class="badge badge-purple">Erreur JS</span></td>
                 <td>
                   <code><%= e.message %></code>
                   <% if (e.file) { %><span class="muted">à <%= e.file %><%= e.line !== undefined ? ':' + e.line : '' %><%= e.col !== undefined ? ':' + e.col : '' %></span><% } %>
@@ -100,7 +100,7 @@
             — <%= it.excerpt(it.parent.comment, 80) %>
           </p>
           <% if (it.issue) { %>
-            <p>Issue du parent : <a href="<%= it.issue.url %>" target="_blank" rel="noopener noreferrer"><%= it.issue.url %></a></p>
+            <p>Ticket du parent : <a href="<%= it.issue.url %>" target="_blank" rel="noopener noreferrer"><%= it.issue.url %></a></p>
           <% } %>
           <button type="button" class="btn" @click="patch({ parent_id: null })">Détacher</button>
         <% } else if (isParent) { %>
@@ -155,7 +155,7 @@
           <dt>Catégorie</dt><dd><%= it.categoryLabels[r.category] %></dd>
           <dt>URL</dt><dd class="break"><%= r.url %></dd>
           <dt>Version</dt><dd><%= r.app_version || '—' %></dd>
-          <dt>Viewport</dt><dd><%= r.viewport || '—' %></dd>
+          <dt>Zone visible</dt><dd><%= r.viewport || '—' %></dd>
           <dt>Navigateur</dt><dd><%= it.describeUserAgent(r.user_agent) %></dd>
           <dt>Date</dt><dd><%= it.fmt(r.client_created_at) %></dd>
           <dt>Notifié le</dt><dd><%= r.last_notified_at ? it.fmt(r.last_notified_at) : '—' %></dd>
@@ -178,26 +178,26 @@
 
       <section class="card">
         <h2>Notes internes</h2>
-        <p class="muted">Privé : jamais partagé (ni Markdown, ni issue, ni e-mail).</p>
+        <p class="muted">Privé : jamais partagé (ni Markdown, ni ticket, ni e-mail).</p>
         <textarea x-model="notes" rows="5"></textarea>
         <button type="button" class="btn btn-small" @click="patch({ admin_notes: notes })">Enregistrer les notes</button>
       </section>
 
       <section class="card">
-        <h2>Issue</h2>
+        <h2>Ticket</h2>
         <% if (isChild) { %>
-          <p class="muted">Un doublon affiche l'issue de son parent.</p>
+          <p class="muted">Un doublon affiche le ticket de son parent.</p>
         <% } else { %>
           <% if (it.issue) { %>
             <p><a href="<%= it.issue.url %>" target="_blank" rel="noopener noreferrer"><%= it.issue.url %></a></p>
           <% } %>
-          <label>Lier une issue existante (URL https)
+          <label>Lier un ticket existant (adresse https)
             <input type="url" x-model="issueUrl" placeholder="https://gitlab.interne/groupe/projet/-/issues/12">
           </label>
           <button type="button" class="btn btn-small" @click="patch({ issue_url: issueUrl.trim() || null })">Enregistrer le lien</button>
           <% if (!r.issue_url) { %>
             <% if (it.issue_form.can_create) { %>
-              <p><button type="button" class="btn btn-primary" @click="openIssue()">Créer l'issue <%= it.issue_form.provider === 'github' ? 'GitHub' : 'GitLab' %></button></p>
+              <p><button type="button" class="btn btn-primary" @click="openIssue()">Créer le ticket <%= it.issue_form.provider === 'github' ? 'GitHub' : 'GitLab' %></button></p>
             <% } else { %>
               <p class="muted"><%= it.issue_form.reason %></p>
             <% } %>
@@ -253,26 +253,26 @@
   <% if (!isChild && !r.issue_url && it.issue_form.can_create) { %>
   <div class="modal" x-show="issueModal" x-cloak @keydown.escape.window="issueModal = false">
     <div class="modal-box">
-      <h2>Créer l'issue <%= it.issue_form.provider === 'github' ? 'GitHub' : 'GitLab' %></h2>
+      <h2>Créer le ticket <%= it.issue_form.provider === 'github' ? 'GitHub' : 'GitLab' %></h2>
       <% if (it.issue_form.anonymize) { %>
-        <p class="muted">Anonymisation active : l'issue ne contiendra ni utilisateur, ni e-mail, ni payload, ni capture.</p>
+        <p class="muted">Anonymisation active : le ticket ne contiendra ni utilisateur, ni e-mail, ni données envoyées ou reçues, ni capture.</p>
       <% } else if (it.issue_form.provider === 'github') { %>
-        <p class="muted">GitHub n'héberge pas de fichiers : l'issue contiendra un lien vers cette fiche Fixi.</p>
+        <p class="muted">GitHub n'héberge pas de fichiers : le ticket contiendra un lien vers cette fiche Fixi.</p>
       <% } else { %>
         <p class="muted">La capture et la pièce jointe seront envoyées sur GitLab.</p>
       <% } %>
       <% if (it.children.length > 0) { %>
-        <p class="muted">L'issue indiquera le nombre d'utilisateurs touchés (<%= it.children.length %> doublon(s) rattaché(s)).</p>
+        <p class="muted">Le ticket indiquera le nombre d'utilisateurs touchés (<%= it.children.length %> doublon(s) rattaché(s)).</p>
       <% } %>
       <label>Titre
         <input type="text" x-model="issueTitle" maxlength="255">
       </label>
-      <label>Labels (séparés par des virgules)
+      <label>Étiquettes (séparées par des virgules)
         <input type="text" x-model="issueLabels">
       </label>
       <p class="error" x-show="issueError" x-text="issueError"></p>
       <div class="actions">
-        <button type="button" class="btn btn-primary" :disabled="issueBusy" @click="createIssue()">Créer l'issue</button>
+        <button type="button" class="btn btn-primary" :disabled="issueBusy" @click="createIssue()">Créer le ticket</button>
         <button type="button" class="btn" @click="issueModal = false">Annuler</button>
       </div>
     </div>

@@ -6,7 +6,7 @@
   <p class="notice" x-show="notice" x-text="notice"></p>
 
   <table class="table">
-    <thead><tr><th>Application</th><th>Slug</th><th>Tracker</th><th>Origines</th><th></th></tr></thead>
+    <thead><tr><th>Application</th><th>Identifiant</th><th>Outil de tickets</th><th>Origines</th><th></th></tr></thead>
     <tbody>
       <template x-for="a in apps" :key="a.id">
         <tr>
@@ -28,39 +28,48 @@
   <section class="card">
     <h2 x-text="form.id ? 'Modifier ' + form.name : 'Nouvelle application'"></h2>
     <form class="grid" @submit.prevent="save()">
-      <label>Slug
+      <label>Identifiant technique
         <input type="text" x-model="form.slug" pattern="[a-z0-9\-]+" required placeholder="shifti">
+        <small class="hint">Minuscules, chiffres et tirets, sans espace. C'est la valeur de <code>data-app</code> dans le code d'intégration (le <em>slug</em>). Le modifier oblige à mettre à jour ce code dans l'application.</small>
       </label>
       <label>Nom
         <input type="text" x-model="form.name" required placeholder="Shifti">
+        <small class="hint">Nom affiché dans l'administration de Fixi.</small>
       </label>
-      <label class="span">Origines autorisées (une par ligne)
-        <textarea x-model="form.origins" rows="3" placeholder="https://shifti.interne"></textarea>
+      <label class="span">Origines autorisées
+        <textarea x-model="form.origins" rows="3" placeholder="https://shifti.interne&#10;http://localhost"></textarea>
+        <small class="hint">Adresse de chaque site qui affiche le bouton de signalement, une par ligne. Seuls le protocole, l'hôte et le port comptent : <code>http://localhost/shifti</code> devient <code>http://localhost</code>. Une autre adresse est refusée, même avec la bonne clé. Une version locale sur un autre port est une autre origine (ex. <code>http://localhost:8080</code>).</small>
       </label>
-      <label>Tracker d'issues
+      <label>Outil de tickets
         <select x-model="form.issue_provider">
           <option value="">Aucun</option>
           <option value="gitlab">GitLab</option>
           <option value="github">GitHub</option>
         </select>
+        <small class="hint">Où créer un ticket (<em>issue</em>) depuis la fiche d'un signalement. Le jeton d'accès se règle dans le <code>.env</code> de Fixi (<code>GITLAB_TOKEN</code> ou <code>GITHUB_TOKEN</code>).</small>
       </label>
       <label>Projet
-        <input type="text" x-model="form.issue_project" placeholder="42 (GitLab) ou owner/repo (GitHub)">
+        <input type="text" x-model="form.issue_project" placeholder="42, groupe/projet ou proprietaire/depot">
+        <small class="hint">GitLab : numéro du projet (<code>42</code>) ou son chemin (<code>groupe/projet</code>). GitHub : <code>propriétaire/dépôt</code>.</small>
       </label>
-      <label>Labels par défaut
+      <label>Étiquettes par défaut
         <input type="text" x-model="form.issue_default_labels" placeholder="bug,fixi">
+        <small class="hint">Ajoutées à chaque ticket (<em>labels</em> dans GitLab et GitHub), séparées par des virgules. Modifiables au moment de créer le ticket.</small>
       </label>
-      <label class="check">
+      <label class="check span">
         <input type="checkbox" x-model="form.issue_anonymize">
-        Anonymiser les issues (sans utilisateur, e-mail, payloads ni capture)
+        <span>Anonymiser les tickets
+          <small class="hint">Le ticket ne contient ni utilisateur, ni e-mail, ni données envoyées ou reçues, ni capture. Utile si l'outil de tickets est lisible par des personnes qui ne doivent pas voir ces informations.</small>
+        </span>
       </label>
       <div class="span color-row">
-        <label>Couleur du widget
+        <label>Couleur du bouton de signalement
           <span class="color-field">
             <input type="color" x-model="form.widget_color" aria-label="Choisir la couleur">
             <input type="text" x-model="form.widget_color" pattern="#[0-9a-fA-F]{6}" maxlength="7" required>
             <button type="button" class="link" @click="form.widget_color = defaultColor">Par défaut</button>
           </span>
+          <small class="hint">Couleur de l'onglet « Signaler un problème » et des boutons de sa fenêtre (le <em>widget</em>). Le texte passe en blanc ou en foncé pour rester lisible.</small>
         </label>
         <div class="widget-preview" aria-hidden="true"
              x-effect="$el.style.setProperty('--preview', previewColor()); $el.style.setProperty('--preview-text', previewText())">
@@ -77,10 +86,10 @@
   </section>
 
   <section class="card" x-show="selected">
-    <h2>Snippet à intégrer dans le layout de <span x-text="selected && selected.name"></span></h2>
-    <p class="muted">Adapter les valeurs <code>data-user</code>, <code>data-user-email</code> et <code>data-version</code> à l'application hôte.</p>
+    <h2>Code d'intégration de <span x-text="selected && selected.name"></span></h2>
+    <p class="muted">À coller une seule fois dans le gabarit commun à toutes les pages de l'application (le <em>layout</em>), en remplaçant <code>data-user</code>, <code>data-user-email</code> et <code>data-version</code> par les valeurs de l'application (exemple en CakePHP ci-dessous). Ce code (le <em>snippet</em>) contient la clé : elle n'est pas secrète, car visible dans la page. Ce sont les origines autorisées qui protègent l'envoi.</p>
     <pre class="snippet" x-text="snippet()"></pre>
-    <button type="button" class="btn" @click="copySnippet()">Copier le snippet</button>
+    <button type="button" class="btn" @click="copySnippet()">Copier le code</button>
     <span class="muted" x-show="copied">Copié.</span>
   </section>
 </div>

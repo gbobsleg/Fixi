@@ -41,7 +41,7 @@ export class GitlabTracker implements IssueTracker {
       body: JSON.stringify({ title: input.title, description, labels: input.labels.join(',') }),
     });
     if (!res.ok) {
-      throw new TrackerError(`GitLab a refusé la création de l'issue : ${await describeFailure(res)}`);
+      throw new TrackerError(`GitLab a refusé la création du ticket : ${await describeFailure(res)}`);
     }
     const issue = (await res.json()) as { iid?: number; web_url?: string };
     if (typeof issue.iid !== 'number' || !issue.web_url) {

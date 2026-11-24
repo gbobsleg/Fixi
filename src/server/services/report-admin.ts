@@ -167,7 +167,7 @@ export function applyReportPatch(db: DB, id: number, patch: ReportPatch): PatchR
 
   if (patch.issue_url !== undefined) {
     if (isChild) {
-      return fail(409, 'child_issue_locked', 'Un doublon affiche l\'issue de son parent : liez l\'issue au parent.');
+      return fail(409, 'child_issue_locked', 'Un doublon affiche le ticket de son parent : liez le ticket au parent.');
     }
     changes.issue_url = patch.issue_url;
     changes.issue_provider = null; // a manual link has no provider

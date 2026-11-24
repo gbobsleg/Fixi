@@ -293,18 +293,18 @@ describe('detail exposes the issue form', () => {
     const before = await env.app.inject({ method: 'GET', url: `/admin/reports/${id}`, headers: { cookie } });
     expect(before.body).toMatch(/class="modal"[^>]*x-cloak/);
     expect(before.body).not.toMatch(/\sstyle\s*=/i);
-    expect(before.body).toContain("Créer l'issue GitLab");
+    expect(before.body).toContain('Créer le ticket GitLab');
 
     await createIssue(id);
     detail = (await env.app.inject({ method: 'GET', url: `/api/admin/reports/${id}`, headers: { cookie } })).json();
     const page =await env.app.inject({ method: 'GET', url: `/admin/reports/${id}`, headers: { cookie } });
-    expect(page.body).not.toContain("Créer l'issue GitLab");
+    expect(page.body).not.toContain('Créer le ticket GitLab');
     expect(detail.issue.url).toBe(GITLAB_ISSUE_URL);
   });
 
   it('explains why the button is missing', async () => {
     const id = addReport(env.db, makeApp(env.db));
     const page = await env.app.inject({ method: 'GET', url: `/admin/reports/${id}`, headers: { cookie } });
-    expect(page.body).toContain("Aucun tracker n&#39;est configuré");
+    expect(page.body).toContain('Aucun outil de tickets n&#39;est configuré');
   });
 });

@@ -322,7 +322,7 @@ document.addEventListener('alpine:init', () => {
         ? await api('PUT', '/api/admin/apps/' + f.id, body)
         : await api('POST', '/api/admin/apps', body);
       if (!res.ok) {
-        this.error = res.data && res.data.error === 'slug_already_used' ? 'Ce slug est déjà utilisé.' : errorText(res);
+        this.error = res.data && res.data.error === 'slug_already_used' ? 'Cet identifiant technique est déjà utilisé.' : errorText(res);
         return;
       }
       this.notice = f.id ? 'Application mise à jour.' : 'Application créée.';
@@ -332,11 +332,11 @@ document.addEventListener('alpine:init', () => {
     },
 
     async regenerate(a) {
-      if (!window.confirm('Régénérer la clé de « ' + a.name + ' » ? Le snippet de l\'application hôte devra être mis à jour.')) return;
+      if (!window.confirm('Régénérer la clé de « ' + a.name + ' » ? Le code d\'intégration de l\'application devra être mis à jour.')) return;
       const res = await api('POST', '/api/admin/apps/' + a.id + '/regenerate-key');
       if (!res.ok) { this.error = errorText(res); return; }
       this.error = '';
-      this.notice = 'Clé régénérée : copiez le nouveau snippet.';
+      this.notice = 'Clé régénérée : copiez le nouveau code d\'intégration.';
       this.selected = res.data.app;
       await this.load();
     },
@@ -374,7 +374,7 @@ document.addEventListener('alpine:init', () => {
         this.copied = true;
         setTimeout(() => { this.copied = false; }, 2000);
       } catch {
-        this.error = 'Copie impossible : sélectionnez le snippet à la main.';
+        this.error = 'Copie impossible : sélectionnez le code à la main.';
       }
     },
   }));

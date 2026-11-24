@@ -63,7 +63,7 @@ describe('admin pages', () => {
     const res = await page('/admin');
     expect(res.body).toContain('Bloquant');
     expect(res.body).toContain('HTTP 5xx');
-    expect(res.body).toContain('JS Error');
+    expect(res.body).toContain('Erreur JS');
   });
 
   it('shows a 404 page for an unknown report', async () => {

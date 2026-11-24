@@ -55,9 +55,9 @@ export function buildIssueForm(ctx: AppContext, report: ReportRow, app: App): Is
     }`,
   );
   let reason: string | null = null;
-  if (report.parent_id !== null) reason = "Ce signalement est un doublon : créez l'issue depuis le signalement parent.";
-  else if (!app.issue_provider) reason = "Aucun tracker n'est configuré pour cette application (page Paramètres).";
-  else if (!app.issue_project) reason = 'Le projet du tracker est vide (page Paramètres).';
+  if (report.parent_id !== null) reason = "Ce signalement est un doublon : créez le ticket depuis le signalement parent.";
+  else if (!app.issue_provider) reason = "Aucun outil de tickets n'est configuré pour cette application (page Paramètres).";
+  else if (!app.issue_project) reason = "Le projet de l'outil de tickets est vide (page Paramètres).";
   else if (!isTrackerConfigured(app.issue_provider, ctx.config)) {
     reason =
       app.issue_provider === 'gitlab'
@@ -136,20 +136,20 @@ export async function createIssueForReport(
 
   // Anti-duplicate lock: one issue per ticket, and never from a duplicate.
   if (report.parent_id !== null) {
-    return fail(409, 'report_is_duplicate', "Ce signalement est un doublon : créez l'issue depuis son parent.");
+    return fail(409, 'report_is_duplicate', "Ce signalement est un doublon : créez le ticket depuis son parent.");
   }
   if (report.issue_url) {
-    return fail(409, 'issue_already_linked', 'Une issue est déjà liée à ce signalement.');
+    return fail(409, 'issue_already_linked', 'Un ticket est déjà lié à ce signalement.');
   }
 
   const app = getAppById(db, report.app_id)!;
   if (!app.issue_provider || !app.issue_project) {
-    return fail(400, 'no_issue_tracker', "Aucun tracker n'est configuré pour cette application.");
+    return fail(400, 'no_issue_tracker', "Aucun outil de tickets n'est configuré pour cette application.");
   }
 
   const pending = inFlight.get(db) ?? new Set<number>();
   inFlight.set(db, pending);
-  if (pending.has(id)) return fail(409, 'issue_in_progress', "Création d'issue déjà en cours.");
+  if (pending.has(id)) return fail(409, 'issue_in_progress', 'Création du ticket déjà en cours.');
   pending.add(id);
 
   try {
