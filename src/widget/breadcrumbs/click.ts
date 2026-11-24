@@ -7,6 +7,7 @@ const INTERACTIVE =
   'button, a, input, select, textarea, label, summary, [role="button"], [role="link"], [role="menuitem"], [role="tab"]';
 const FORM_FIELDS = new Set(['INPUT', 'SELECT', 'TEXTAREA']);
 const BUTTON_INPUT_TYPES = new Set(['button', 'submit', 'reset']);
+const MASK = '[data-fixi-mask]';
 
 export const FIXI_ROOT_ID = 'fixi-root';
 
@@ -25,7 +26,10 @@ function visibleText(el: Element): string | undefined {
   return text ? clip(text, 50) : undefined;
 }
 
-/** Records clicks as `{ selector, text }`. Clicks inside the Fixi UI are ignored. */
+/**
+ * Records clicks as `{ selector, text }`. Clicks inside the Fixi UI are ignored. Inside a
+ * `data-fixi-mask` zone only the selector is kept.
+ */
 export function installClicks(store: TimelineStore): void {
   document.addEventListener(
     'click',
@@ -36,12 +40,17 @@ export function installClicks(store: TimelineStore): void {
 
       const interactive = target.closest(INTERACTIVE);
       const el = interactive ?? target;
+      // A masked zone hides its text in the timeline too: the click is inside one, or the control
+      // contains one (e.g. a button whose label is a masked name).
+      const masked =
+        target.closest(MASK) !== null ||
+        (interactive !== null && (interactive.closest(MASK) !== null || interactive.querySelector(MASK) !== null));
       store.push({
         t: Date.now(),
         type: 'click',
         selector: clip(buildSelector(el), 200),
         // Text is only read on interactive controls: reading a big container would be slow and noisy.
-        text: interactive ? visibleText(interactive) : undefined,
+        text: interactive && !masked ? visibleText(interactive) : undefined,
       });
     }),
     true,

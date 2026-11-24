@@ -137,6 +137,18 @@ describe('click collector', () => {
     expect(recorded).toContain('Enregistrer'); // a submit button's value is its label
   });
 
+  it('keeps only the selector of a click inside a data-fixi-mask zone', () => {
+    html(`<ul data-fixi-mask><li><button id="s1" aria-label="Dupont Jean" title="Dupont Jean">Dupont Jean</button></li></ul>
+          <div data-fixi-mask><span id="plain" title="Martin Paul">Martin Paul</span></div>
+          <button id="wrap"><span data-fixi-mask>Durand Léa</span></button>`);
+    for (const id of ['s1', 'plain', 'wrap']) document.getElementById(id)!.click();
+    const recorded = clicks();
+    expect(recorded).toHaveLength(3);
+    expect((recorded[0] as { selector: string }).selector).toBe('button#s1');
+    const text = JSON.stringify(recorded);
+    for (const name of ['Dupont', 'Martin', 'Durand']) expect(text).not.toContain(name);
+  });
+
   it('ignores clicks inside the Fixi widget', () => {
     html('<div id="fixi-root"></div><button id="other">Autre</button>');
     const host = document.getElementById('fixi-root')!;

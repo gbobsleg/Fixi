@@ -8,6 +8,7 @@ import { installNetwork } from './breadcrumbs/network.js';
 import { createStore } from './breadcrumbs/store.js';
 import { createConfigReader } from './config.js';
 import { debug } from './native.js';
+import { setExtraRedactKeys } from './sanitize.js';
 import { createUI } from './ui/index.js';
 
 declare global {
@@ -33,6 +34,9 @@ function main(): void {
   const config = readConfig();
   if (!config.app || !config.apiKey) return debug('data-app and data-api-key are required');
   window.__fixiLoaded = true;
+
+  // Before any collector: the very first event (page load) must already honour `data-redact-keys`.
+  setExtraRedactKeys(() => readConfig().redactKeys);
 
   const store = createStore(config.app);
   // Each collector is isolated: if one cannot be installed, the others still work.

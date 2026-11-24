@@ -24,8 +24,13 @@ Une seule balise dans le layout global de l'application hôte (aucun autre chang
 - `data-app` et `data-api-key` sont obligatoires. Les autres attributs sont facultatifs.
 - L'origine de l'application (ex. `https://shifti.interne`) doit figurer dans les `allowed_origins` de l'application côté Fixi.
 - `window.Fixi.open()` ouvre la fenêtre depuis un bouton de l'application.
-- `data-fixi-mask` sur un élément le remplace par un bloc gris dans la capture d'écran.
-- Les champs mot de passe ne sont jamais lus. Les clés `password`, `token`, `secret`, `auth`, `cookie`, `csrf`, `api_key`… sont remplacées par `[REDACTED]` avant tout envoi.
+- `data-fixi-mask` sur un élément le remplace par un bloc gris dans la capture d'écran. Un clic dans cette zone n'enregistre pas son texte dans la chronologie, seulement son sélecteur.
+- Les champs mot de passe ne sont jamais lus. Les clés `password`, `token`, `secret`, `auth`, `cookie`, `csrf`, `api_key`… sont remplacées par `[REDACTED]` avant tout envoi. `pin` l'est aussi, mais seulement comme mot entier de la clé : `pin`, `supervisor_pin`, `newPin`, `pin-code` sont caviardés ; `spinner` ou `shipping` ne le sont pas.
+- `data-redact-keys` (facultatif) ajoute des clés à caviarder, séparées par des virgules. Exemple : `data-redact-keys="query,agent_matricule,nom,prenom"`.
+  - Elles s'appliquent aux paramètres d'URL (requêtes réseau, navigation, URL de la page), aux corps de requête et de réponse, et au texte libre (`nom: Dupont`).
+  - La comparaison porte sur la clé **entière**, sans tenir compte de la casse : `nom` caviarde `nom` et `NOM`, pas `nombre` ni `nomOffre`.
+  - L'attribut est relu à chaque événement enregistré : il peut être modifié après le chargement.
+  - Le caviardage a lieu dans le navigateur, avant tout stockage. Les valeurs placées dans le **chemin** d'une URL (`/agents/12345`) ne sont pas couvertes.
 
 ## Démarrage local
 

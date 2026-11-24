@@ -1,6 +1,88 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
-import { redact, redactText, sanitizeBody, sanitizeText, sanitizeUrl } from '../../src/widget/sanitize.js';
+import { afterEach, describe, expect, it } from 'vitest';
+import { parseKeyList } from '../../src/widget/config.js';
+import {
+  isSensitiveKey,
+  redact,
+  redactText,
+  sanitizeBody,
+  sanitizeText,
+  sanitizeUrl,
+  setExtraRedactKeys,
+} from '../../src/widget/sanitize.js';
+
+describe('PIN (whole word of the key only)', () => {
+  const pinKeys = ['pin', 'PIN', 'supervisor_pin', 'newPin', 'pinCode', 'pin-code', 'supervisorPIN', 'PINCode'];
+  const otherKeys = ['spinner', 'opinion', 'shipping', 'pinned', 'pinyin', 'spin'];
+
+  it('recognizes pin as a word in camelCase, snake_case and kebab-case keys', () => {
+    for (const key of pinKeys) expect(isSensitiveKey(key), key).toBe(true);
+    for (const key of otherKeys) expect(isSensitiveKey(key), key).toBe(false);
+  });
+
+  it('redacts PIN values in JSON bodies (e.g. a wrong PIN rejected with a 401)', () => {
+    const out = sanitizeBody('{"pin":"1234","supervisor_pin":"5678","spinner":true,"opinion":"ok"}')!;
+    expect(out).not.toContain('1234');
+    expect(out).not.toContain('5678');
+    expect(out).toContain('"spinner":true');
+    expect(out).toContain('"opinion":"ok"');
+  });
+
+  it('redacts PIN query parameters and keeps look-alike ones', () => {
+    const out = sanitizeUrl('/login?pin=1234&newPin=5678&shipping=fast');
+    expect(out).not.toContain('1234');
+    expect(out).not.toContain('5678');
+    expect(out).toContain('shipping=fast');
+  });
+
+  it('redacts PIN values in free text without touching words that contain "pin"', () => {
+    expect(redactText('bad pin=1234 for user')).not.toContain('1234');
+    expect(redactText('refused: pin=1234')).toBe('refused: pin=[REDACTED]');
+    expect(redactText('{"pinCode": "9999"}')).not.toContain('9999');
+    expect(redactText('spinner=3 opinion: good shipping=fast')).toBe('spinner=3 opinion: good shipping=fast');
+  });
+});
+
+describe('extra keys from data-redact-keys', () => {
+  afterEach(() => setExtraRedactKeys(() => []));
+
+  it('parses the attribute into lowercase keys', () => {
+    expect(parseKeyList(' query, Agent_Matricule,, ')).toEqual(['query', 'agent_matricule']);
+    expect(parseKeyList(undefined)).toEqual([]);
+  });
+
+  it('redacts URLs, bodies and free text, comparing whole keys and ignoring case', () => {
+    setExtraRedactKeys(() => ['query', 'agent_matricule', 'nom', 'prenom']);
+    expect(sanitizeUrl('/api/agent/suggestions?query=Dupo')).toBe('/api/agent/suggestions?query=[REDACTED]');
+    expect(sanitizeUrl('/api/agent/bootstrap?Agent_Matricule=12345&nombre=3')).toBe(
+      '/api/agent/bootstrap?Agent_Matricule=[REDACTED]&nombre=3',
+    );
+
+    const body = sanitizeBody({ nom: 'Dupont', prenom: 'Jean', nombre: 3, nomOffre: 'Fibre', denomination: 'x' })!;
+    expect(body).not.toContain('Dupont');
+    expect(body).not.toContain('Jean');
+    expect(body).toContain('"nombre":3');
+    expect(body).toContain('"nomOffre":"Fibre"');
+    expect(body).toContain('"denomination":"x"');
+
+    expect(redactText('agent nom: Dupont, nombre: 5')).toBe('agent nom: [REDACTED], nombre: 5');
+  });
+
+  it('reads the source again at every call (an attribute change applies to the next event)', () => {
+    let keys: string[] = [];
+    setExtraRedactKeys(() => keys);
+    expect(sanitizeUrl('/s?query=Dupo')).toContain('Dupo');
+    keys = ['query'];
+    expect(sanitizeUrl('/s?query=Dupo')).not.toContain('Dupo');
+  });
+
+  it('never throws when the source fails', () => {
+    setExtraRedactKeys(() => {
+      throw new Error('boom');
+    });
+    expect(sanitizeUrl('/s?query=Dupo&token=t')).toBe('/s?query=Dupo&token=[REDACTED]');
+  });
+});
 
 describe('redact', () => {
   it('replaces the value of every sensitive key, whatever the case', () => {

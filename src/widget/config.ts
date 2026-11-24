@@ -4,6 +4,8 @@ export interface WidgetConfig {
   user: string;
   userEmail?: string;
   version?: string;
+  /** Extra keys to redact (`data-redact-keys="query,nom"`), lowercase, compared to whole keys. */
+  redactKeys: string[];
   /** Origin of the Fixi server, deduced from the `src` of the script tag. */
   apiBase: string;
 }
@@ -13,6 +15,15 @@ function findScript(): HTMLScriptElement | null {
   const current = document.currentScript;
   if (current instanceof HTMLScriptElement && current.hasAttribute('data-app')) return current;
   return document.querySelector<HTMLScriptElement>('script[data-app][data-api-key]');
+}
+
+/** `" query, Agent_Matricule,,"` -> `['query', 'agent_matricule']`. */
+export function parseKeyList(value: string | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((key) => key.trim().toLowerCase())
+    .filter(Boolean);
 }
 
 /**
@@ -32,6 +43,7 @@ export function createConfigReader(): (() => WidgetConfig) | null {
       user: attr('user') ?? '',
       userEmail: attr('user-email'),
       version: attr('version'),
+      redactKeys: parseKeyList(attr('redact-keys')),
       apiBase,
     };
   };
