@@ -1,7 +1,4 @@
-<%/* Fixi mark: an open ring (same family as the Flowi mark), a check ("fixed") and a dot ("a report").
-     Single color (currentColor): white on the teal top bar, teal on the login page. */%>
-<svg class="<%= it.cls || 'logo' %>" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
-  <path d="M178 100A78 78 0 1 1 139 32.5" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round"/>
-  <path d="M64 102l27 27 47-49" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="171" cy="45" r="15" fill="currentColor"/>
+<%/* Picto Fixi (charte commune : E:\charte-applis\fixi\mark.svg). Monochrome (currentColor). */%>
+<svg class="<%= it.cls || 'logo' %>" viewBox="9 9 182 182" fill="currentColor" aria-hidden="true" focusable="false">
+  <path d="M178 100A78 78 0 1 1 139 32.5" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round"/><path d="M64 102l27 27 47-49" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><circle cx="171" cy="45" r="15"/>
 </svg>

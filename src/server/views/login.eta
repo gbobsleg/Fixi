@@ -1,5 +1,5 @@
 <div class="login" x-data="loginForm" x-cloak>
-  <div class="login-brand"><%~ include('./partials/logo', { cls: 'logo' }) %><span>Fixi</span></div>
+  <div class="login-brand"><%~ include('./partials/wordmark', { cls: 'wordmark' }) %></div>
   <section class="card">
     <h1>Connexion</h1>
     <form @submit.prevent="submit()">

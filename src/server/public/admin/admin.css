@@ -4,17 +4,17 @@
 [x-cloak] { display: none !important; }
 
 :root {
-  /* Palette shared with Shifti and Flowi (shifti/webroot/css/app/shell.css, Flowi/public/assets/theme.js) */
+  /* Palette Fixi de la charte commune (E:\charte-applis\palette.json) : 500 #a7547e, 600 #8d3c66, 50 #fdf1f6 */
   --bg: #f4f6f7;
   --card: #fff;
   --text: #1f2a30;
   --muted: #6b7a82;
   --border: #e2e8ea;
   --input-border: #d5dde0;
-  --primary: #318f9b;
-  --primary-hover: #27757f;
-  --primary-soft: #eef6f7;
-  --ring: rgba(49, 143, 155, .25);
+  --primary: #a7547e;
+  --primary-hover: #8d3c66;
+  --primary-soft: #fdf1f6;
+  --ring: rgba(167, 84, 126, .25);
   --danger: #b42318;
   --warning: #b45309;
   --radius: 6px;
@@ -38,13 +38,13 @@ code { background: #edf1f2; padding: 1px 4px; border-radius: 4px; word-break: br
 
 /* Layout */
 :root { --content-max: 1280px; --content-pad: 24px; }
-/* Full-width teal bar; its content is bounded to the width of .page below (like .shell-inner in Shifti). */
+/* Full-width primary-color bar; its content is bounded to the width of .page below (like .shell-inner in Shifti). */
 .topbar { position: sticky; top: 0; z-index: 50; height: 56px;
   background: var(--primary); color: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, .08); }
 .topbar-inner { display: flex; align-items: center; gap: 24px; height: 100%;
   max-width: var(--content-max); margin: 0 auto; padding: 0 var(--content-pad); }
-.topbar .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 19px; text-decoration: none; color: #fff; }
-.topbar .brand .logo { width: 28px; height: 28px; }
+.topbar .brand { display: flex; align-items: center; text-decoration: none; color: #fff; }
+.topbar .brand .wordmark { display: block; height: 28px; width: auto; }
 .topbar nav { display: flex; align-self: stretch; gap: 20px; }
 .topbar nav a { display: flex; align-items: center; color: rgba(255, 255, 255, .78); text-decoration: none; font-size: 15px; }
 .topbar nav a:hover { color: #fff; }
@@ -77,9 +77,8 @@ textarea { resize: vertical; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 .grid .span { grid-column: 1 / -1; }
 .actions { display: flex; gap: 8px; }
-.login-brand { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 28px;
-  color: var(--primary); font-size: 40px; font-weight: 700; letter-spacing: -.01em; }
-.login-brand .logo { width: 56px; height: 56px; }
+.login-brand { display: flex; justify-content: center; margin-bottom: 28px; color: var(--primary); }
+.login-brand .wordmark { display: block; height: 56px; width: auto; }
 .login .card { padding: 24px; }
 .login h1 { font-size: 18px; font-weight: 600; margin: 0 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 .login form { display: grid; gap: 14px; }
@@ -132,7 +131,7 @@ button.link { background: none; border: 0; padding: 4px 0; color: var(--primary)
 .badge-green { background: #d9f2e1; color: #1b6e3a; }
 .badge-gray { background: #e8ebf0; color: #3b4656; }
 .status { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; background: #e8ebf0; }
-.status-new { background: var(--primary-soft); color: var(--primary-hover); box-shadow: inset 0 0 0 1px #cfe3e6; }
+.status-new { background: var(--primary-soft); color: var(--primary-hover); box-shadow: inset 0 0 0 1px #ecd9e3; }
 .status-in_progress { background: #fff3bf; color: #7a5b00; }
 .status-sent { background: #ece3fb; color: #5a2ea6; }
 .status-resolved { background: #d9f2e1; color: #1b6e3a; }
