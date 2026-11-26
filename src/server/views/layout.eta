@@ -13,7 +13,7 @@
 <% if (it.nav) { %>
   <header class="topbar" x-data="logoutButton">
    <div class="topbar-inner">
-    <a class="brand" href="/admin"><%~ include('./partials/logo', { cls: 'logo' }) %>Fixi</a>
+    <a class="brand" href="/admin"><%~ include('./partials/wordmark', { cls: 'wordmark' }) %></a>
     <nav>
       <a href="/admin" class="<%= it.active === 'reports' ? 'active' : '' %>">Signalements</a>
       <a href="/admin/settings" class="<%= it.active === 'settings' ? 'active' : '' %>">Paramètres</a>
