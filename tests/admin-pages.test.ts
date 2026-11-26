@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { addReport, loginCookie, makeApp, makeTestApp, type TestEnv } from './helpers.js';
+import { addReport, loginCookie, makeApp, makeTestApp, TEST_ORIGIN, type TestEnv } from './helpers.js';
 
 let env: TestEnv;
 let cookie: string;
@@ -28,6 +28,17 @@ describe('admin pages', () => {
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toContain('text/html');
     expect(res.body).toContain('Se connecter');
+  });
+
+  it("loads Fixi's own widget only when the app 'fixi' allows the server origin", async () => {
+    const marker = '<script src="/widget.js" data-app="fixi"';
+    expect((await page('/admin')).body).not.toContain(marker);
+    makeApp(env.db, { slug: 'fixi', allowed_origins: [TEST_ORIGIN] });
+    expect((await page('/admin')).body).not.toContain(marker);
+    env.db.prepare('DELETE FROM apps WHERE slug = ?').run('fixi');
+    makeApp(env.db, { slug: 'fixi', allowed_origins: ['http://fixi.test'] });
+    expect((await page('/admin')).body).toContain(marker);
+    expect((await page('/admin/login', false)).body).not.toContain(marker);
   });
 
   it('redirects /admin/login to /admin when already logged in', async () => {

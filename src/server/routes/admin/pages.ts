@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { CATEGORIES, STATUSES } from '../../../shared/types.js';
 import type { AppContext } from '../../context.js';
 import { readSession } from '../../plugins/auth.js';
-import { listApps } from '../../repositories/apps.js';
+import { getAppBySlug, listApps } from '../../repositories/apps.js';
 import { listReports } from '../../repositories/reports.js';
 import { PROJECT_ROOT } from '../../paths.js';
 import { reportListQuerySchema } from '../../schemas.js';
@@ -64,8 +64,15 @@ export function registerAdminPages(app: FastifyInstance, ctx: AppContext): void 
     adminUser: config.adminUser,
   };
 
+  /** Fixi's own widget, only if an app `fixi` exists and allows this server's origin (else every send would be a 403). */
+  const selfWidget = () => {
+    const self = getAppBySlug(db, 'fixi');
+    const origin = new URL(config.appBaseUrl).origin;
+    return self && self.allowed_origins.includes(origin) ? { app: 'fixi', apiKey: self.api_key } : null;
+  };
+
   const render = (reply: FastifyReply, template: string, data: Record<string, unknown>) =>
-    reply.view(template, { ...common, nav: true, ...data });
+    reply.view(template, { ...common, nav: true, selfWidget: selfWidget(), ...data });
 
   // Alpine is served straight from node_modules: it works in `npm run dev` without any build step.
   let alpine: Buffer | undefined;

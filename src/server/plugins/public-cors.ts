@@ -23,7 +23,8 @@ export function registerPublicCors(app: FastifyInstance, ctx: AppContext): void 
   // Headers are added on every response (including errors), so the widget can read 401/403/413 bodies.
   app.addHook('onSend', async (req, reply, payload) => {
     if (!PUBLIC_PATHS.has(pathOf(req))) return payload;
-    reply.header('Vary', 'Origin');
+    // Sec-Fetch-Site: GET /api/widget/config answers differently to a same-origin call (see routes/public/widget.ts).
+    reply.header('Vary', 'Origin, Sec-Fetch-Site');
     const origin = req.headers.origin;
     if (origin && isOriginAllowedByAnyApp(ctx.db, origin)) {
       reply.header('Access-Control-Allow-Origin', origin);

@@ -38,11 +38,14 @@ export function registerWidgetRoute(app: FastifyInstance, ctx: AppContext): void
   app.get(WIDGET_CONFIG_PATH, async (req, reply) => {
     const parsed = configQuery.safeParse(req.query);
     const target = parsed.success ? getAppBySlug(ctx.db, parsed.data.app) : undefined;
-    const origin = req.headers.origin;
+    // A same-origin GET carries no Origin: the browser-set Sec-Fetch-Site tells us it comes from our own pages.
+    const origin =
+      req.headers.origin ??
+      (req.headers['sec-fetch-site'] === 'same-origin' ? new URL(ctx.config.appBaseUrl).origin : undefined);
     const allowed = !!target && !!origin && target.allowed_origins.includes(origin);
     return reply
       .header('Cache-Control', 'public, max-age=300')
-      .header('Vary', 'Origin')
+      .header('Vary', 'Origin, Sec-Fetch-Site')
       .send({ color: allowed ? target.widget_color : DEFAULT_WIDGET_COLOR });
   });
 }

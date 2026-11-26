@@ -16,6 +16,20 @@ export interface FixiUI {
 /** Events that must not leak out of the widget to the host app (shortcuts, focus traps...). */
 const ISOLATED_EVENTS = ['keydown', 'keyup', 'keypress', 'focusin'];
 
+/**
+ * Applies the widget styles. A constructed stylesheet is built in JS, so a strict host CSP
+ * (`style-src 'self'`) does not block it; a <style> tag would be. Old browsers fall back to <style>.
+ */
+function applyStyles(root: ShadowRoot): void {
+  if ('adoptedStyleSheets' in ShadowRoot.prototype && 'replaceSync' in CSSStyleSheet.prototype) {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(STYLES);
+    root.adoptedStyleSheets = [sheet];
+  } else {
+    root.append(h('style', { textContent: STYLES }));
+  }
+}
+
 export function createUI(getConfig: () => WidgetConfig, store: TimelineStore): FixiUI {
   let root: ShadowRoot | null = null;
   let tab: HTMLButtonElement | null = null;
@@ -26,7 +40,7 @@ export function createUI(getConfig: () => WidgetConfig, store: TimelineStore): F
     if (root || document.getElementById(FIXI_ROOT_ID)) return;
     const host = h('div', { id: FIXI_ROOT_ID });
     root = host.attachShadow({ mode: 'open' });
-    root.append(h('style', { textContent: STYLES }));
+    applyStyles(root);
 
     tab = h(
       'button',

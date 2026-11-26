@@ -79,6 +79,18 @@ describe('GET /api/widget/config', () => {
     expect((await get(app.slug, 'https://evil.example')).headers['access-control-allow-origin']).toBeUndefined();
   });
 
+  it('same-origin GET without Origin: color if APP_BASE_URL origin is allowed, default without Sec-Fetch-Site', async () => {
+    const app = makeApp(env.db, { allowed_origins: ['http://fixi.test'], widget_color: '#a7547e' });
+    const url = `/api/widget/config?app=${app.slug}`;
+    const same = await env.app.inject({ method: 'GET', url, headers: { 'sec-fetch-site': 'same-origin' } });
+    expect(same.json()).toEqual({ color: '#a7547e' });
+    expect(same.headers.vary).toContain('Sec-Fetch-Site');
+    const cross = await env.app.inject({ method: 'GET', url, headers: { 'sec-fetch-site': 'cross-site' } });
+    expect(cross.json()).toEqual({ color: '#318f9b' });
+    const none = await env.app.inject({ method: 'GET', url });
+    expect(none.json()).toEqual({ color: '#318f9b' });
+  });
+
   it('needs no admin session', async () => {
     const app = makeApp(env.db, { allowed_origins: [TEST_ORIGIN] });
     expect((await get(app.slug, TEST_ORIGIN)).statusCode).toBe(200);
